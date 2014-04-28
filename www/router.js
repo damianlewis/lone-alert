@@ -19,7 +19,7 @@ module.exports = Backbone.Router.extend({
         "location": "location"        
     },
 
-    home: function () {
+    home: function() {
         slider.slidePage(homeView.$el);
     },
 
