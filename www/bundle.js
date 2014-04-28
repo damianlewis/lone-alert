@@ -6,13 +6,118 @@ Backbone.$ = $;
 var Router = require('./router');
 var router = new Router();
 
-// $("body").on("click", ".back-button", function (event) {
-//     event.preventDefault();
-//     window.history.back();
-// });
+$("body").on("click", ".back-button", function (event) {
+    event.preventDefault();
+    window.history.back();
+});
 
 Backbone.history.start();
-},{"./router":14,"backbone":3,"jquery":13}],2:[function(require,module,exports){
+},{"./router":16,"backbone":4,"jquery":14}],2:[function(require,module,exports){
+"use strict";
+
+var Backbone = require('backbone');
+var $ = require('jquery');
+
+var appointments = [
+    {"id": 1, "firstName": "Damian", "lastName": "Lewis", "address": "123 Market St", "city": "Hemel Hempstead", "Region": "Herts", "postCode": "HP12 4GH", "latitude": 51.7140143, "longitude": -0.3340304, "date": "2014-04-28", "time": "10:00", "duration": "45"},
+    {"id": 2, "firstName": "Freya", "lastName": "Lewis", "address": "54 High St", "city": "St Albans", "Region": "Herts", "postCode": "AL1 4DF", "latitude": 37.785868, "longitude": -122.4064973, "date": "2014-04-28", "time": "11:00", "duration": "45"},
+    {"id": 3, "firstName": "Thoms", "lastName": "Lewis", "address": "78 Station Rd", "city": "Hatfield", "Region": "Herts", "postCode": "AL10 6GH", "latitude": 53.7140143, "longitude": -0.5340304, "date": "2014-04-28", "time": "12:00", "duration": "45"},
+];
+
+var findById = function (id) {
+    var deferred = $.Deferred();
+    var appointment = null;
+    var l = appointments.length;
+    var i;
+
+    for (i = 0; i < l; i = i + 1) {
+        if (appointments[i].id === id) {
+            appointment = appointments[i];
+            break;
+        }
+    }
+
+    deferred.resolve(appointment);
+    return deferred.promise();
+};
+
+var findByPosition = function (searchLatitude, searchLongitude) {
+    var threshold = 0.02;
+    var deferred = $.Deferred();
+    var results = appointments.filter(function (element) {
+        var latitude = element.latitude;
+        var longitude = element.longitude;
+        if (searchLatitude >= latitude-threshold && searchLatitude <= latitude+threshold) {
+            if (searchLongitude >= longitude-threshold && searchLongitude <= longitude+threshold) {
+                return true;
+            }
+        }
+    });
+
+    console.log(JSON.stringify(results));
+    deferred.resolve(results);
+    return deferred.promise();
+};
+
+var getAll = function () {
+    var deferred = $.Deferred();
+    var results = appointments;
+
+    console.log(JSON.stringify(results));
+    deferred.resolve(results);
+    return deferred.promise();
+};
+
+
+var Appointment = Backbone.Model.extend({
+
+    sync: function (method, model, options) {
+        if (method === "read") {
+            findById(parseInt(this.id)).done(function (data) {
+                options.success(data);
+            });
+        }
+    }
+
+});
+
+var AppointmentCollection = Backbone.Collection.extend({
+
+    model: Appointment,
+
+    sync: function (method, model, options) {
+        if (method === "read") {
+            getAll().done(function(data) {
+                options.success(data);
+            });
+        }
+    }
+
+});
+
+var FilteredAppointmentCollection = Backbone.Collection.extend({
+
+    model: Appointment,
+
+    sync: function (method, model, options) {
+        if (method === "read") {
+            findByPosition(parseFloat(options.data.latitude), parseFloat(options.data.longitude)).done(function(data) {
+                options.success(data);
+            });
+        }
+    }
+
+});
+
+Backbone.$ = $;
+
+module.exports = {
+    Appointment: Appointment,
+    AppointmentCollection: AppointmentCollection,
+    FilteredAppointmentCollection: FilteredAppointmentCollection
+
+};
+},{"backbone":4,"jquery":14}],3:[function(require,module,exports){
 /* Notes:
  * - History management is currently done using window.location.hash.  This could easily be changed to use Push State instead.
  * - jQuery dependency for now. This could also be easily removed.
@@ -75,7 +180,7 @@ module.exports = function PageSlider(container) {
     }
 
 }
-},{"jquery":13}],3:[function(require,module,exports){
+},{"jquery":14}],4:[function(require,module,exports){
 //     Backbone.js 1.1.2
 
 //     (c) 2010-2014 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
@@ -1685,7 +1790,7 @@ module.exports = function PageSlider(container) {
 
 }));
 
-},{"underscore":4}],4:[function(require,module,exports){
+},{"underscore":5}],5:[function(require,module,exports){
 //     Underscore.js 1.6.0
 //     http://underscorejs.org
 //     (c) 2009-2014 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
@@ -3030,7 +3135,7 @@ module.exports = function PageSlider(container) {
   }
 }).call(this);
 
-},{}],5:[function(require,module,exports){
+},{}],6:[function(require,module,exports){
 "use strict";
 /*globals Handlebars: true */
 var base = require("./handlebars/base");
@@ -3063,7 +3168,7 @@ var Handlebars = create();
 Handlebars.create = create;
 
 exports["default"] = Handlebars;
-},{"./handlebars/base":6,"./handlebars/exception":7,"./handlebars/runtime":8,"./handlebars/safe-string":9,"./handlebars/utils":10}],6:[function(require,module,exports){
+},{"./handlebars/base":7,"./handlebars/exception":8,"./handlebars/runtime":9,"./handlebars/safe-string":10,"./handlebars/utils":11}],7:[function(require,module,exports){
 "use strict";
 var Utils = require("./utils");
 var Exception = require("./exception")["default"];
@@ -3244,7 +3349,7 @@ exports.log = log;var createFrame = function(object) {
   return obj;
 };
 exports.createFrame = createFrame;
-},{"./exception":7,"./utils":10}],7:[function(require,module,exports){
+},{"./exception":8,"./utils":11}],8:[function(require,module,exports){
 "use strict";
 
 var errorProps = ['description', 'fileName', 'lineNumber', 'message', 'name', 'number', 'stack'];
@@ -3273,7 +3378,7 @@ function Exception(message, node) {
 Exception.prototype = new Error();
 
 exports["default"] = Exception;
-},{}],8:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 "use strict";
 var Utils = require("./utils");
 var Exception = require("./exception")["default"];
@@ -3411,7 +3516,7 @@ exports.program = program;function invokePartial(partial, name, context, helpers
 exports.invokePartial = invokePartial;function noop() { return ""; }
 
 exports.noop = noop;
-},{"./base":6,"./exception":7,"./utils":10}],9:[function(require,module,exports){
+},{"./base":7,"./exception":8,"./utils":11}],10:[function(require,module,exports){
 "use strict";
 // Build out our basic SafeString type
 function SafeString(string) {
@@ -3423,7 +3528,7 @@ SafeString.prototype.toString = function() {
 };
 
 exports["default"] = SafeString;
-},{}],10:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 "use strict";
 /*jshint -W004 */
 var SafeString = require("./safe-string")["default"];
@@ -3500,15 +3605,15 @@ exports.escapeExpression = escapeExpression;function isEmpty(value) {
 }
 
 exports.isEmpty = isEmpty;
-},{"./safe-string":9}],11:[function(require,module,exports){
+},{"./safe-string":10}],12:[function(require,module,exports){
 // Create a simple path alias to allow browserify to resolve
 // the runtime on a supported path.
 module.exports = require('./dist/cjs/handlebars.runtime');
 
-},{"./dist/cjs/handlebars.runtime":5}],12:[function(require,module,exports){
+},{"./dist/cjs/handlebars.runtime":6}],13:[function(require,module,exports){
 module.exports = require("handlebars/runtime")["default"];
 
-},{"handlebars/runtime":11}],13:[function(require,module,exports){
+},{"handlebars/runtime":12}],14:[function(require,module,exports){
 /*!
  * jQuery JavaScript Library v2.1.0
  * http://jquery.com/
@@ -12621,13 +12726,17 @@ return jQuery;
 
 }));
 
-},{}],14:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
+module.exports=require(5)
+},{}],16:[function(require,module,exports){
 "use strict";
 
 var Backbone = require('backbone');
 var $ = require('jquery');
 var PageSlider = require('./modules/pageslider');
 var HomeView = require('./views/Home');
+var ScheduleView = require('./views/Schedule');
+var LocationView = require('./views/Location');
 Backbone.$ = $;
 
 var slider = new PageSlider($('body'));
@@ -12637,31 +12746,117 @@ module.exports = Backbone.Router.extend({
     
     routes: {
         "": "home",
+        "schedule": "schedule",
+        "location": "location"        
     },
 
-    home: function () {
+    home: function() {
         slider.slidePage(homeView.$el);
+    },
+
+    schedule: function() {
+        slider.slidePage(new ScheduleView().$el);
+    },
+
+    location: function() {
+        slider.slidePage(new LocationView().$el);
     }
 
 });
-},{"./modules/pageslider":2,"./views/Home":16,"backbone":3,"jquery":13}],15:[function(require,module,exports){
+},{"./modules/pageslider":3,"./views/Home":22,"./views/Location":23,"./views/Schedule":24,"backbone":4,"jquery":14}],17:[function(require,module,exports){
 // hbsfy compiled Handlebars template
 var Handlebars = require('hbsfy/runtime');
 module.exports = Handlebars.template(function (Handlebars,depth0,helpers,partials,data) {
   this.compilerInfo = [4,'>= 1.0.0'];
 helpers = this.merge(helpers, Handlebars.helpers); data = data || {};
-  var buffer = "", stack1, helper, functionType="function", escapeExpression=this.escapeExpression;
+  var buffer = "", stack1, functionType="function", escapeExpression=this.escapeExpression, self=this;
 
-
-  buffer += "<h1>Hello ";
-  if (helper = helpers.name) { stack1 = helper.call(depth0, {hash:{},data:data}); }
-  else { helper = (depth0 && depth0.name); stack1 = typeof helper === functionType ? helper.call(depth0, {hash:{},data:data}) : helper; }
+function program1(depth0,data) {
+  
+  var buffer = "", stack1, helper;
+  buffer += "\n    <li>\n        <a href=\"#appointment/";
+  if (helper = helpers.id) { stack1 = helper.call(depth0, {hash:{},data:data}); }
+  else { helper = (depth0 && depth0.id); stack1 = typeof helper === functionType ? helper.call(depth0, {hash:{},data:data}) : helper; }
   buffer += escapeExpression(stack1)
-    + "</h1>";
+    + "\">\n            <p>";
+  if (helper = helpers.firstName) { stack1 = helper.call(depth0, {hash:{},data:data}); }
+  else { helper = (depth0 && depth0.firstName); stack1 = typeof helper === functionType ? helper.call(depth0, {hash:{},data:data}) : helper; }
+  buffer += escapeExpression(stack1)
+    + " ";
+  if (helper = helpers.lastName) { stack1 = helper.call(depth0, {hash:{},data:data}); }
+  else { helper = (depth0 && depth0.lastName); stack1 = typeof helper === functionType ? helper.call(depth0, {hash:{},data:data}) : helper; }
+  buffer += escapeExpression(stack1)
+    + "</p>\n        </a>\n    </li>\n";
+  return buffer;
+  }
+
+  buffer += "<ul>\n";
+  stack1 = helpers.each.call(depth0, depth0, {hash:{},inverse:self.noop,fn:self.program(1, program1, data),data:data});
+  if(stack1 || stack1 === 0) { buffer += stack1; }
+  buffer += "\n</ul>";
   return buffer;
   });
 
-},{"hbsfy/runtime":12}],16:[function(require,module,exports){
+},{"hbsfy/runtime":13}],18:[function(require,module,exports){
+// hbsfy compiled Handlebars template
+var Handlebars = require('hbsfy/runtime');
+module.exports = Handlebars.template(function (Handlebars,depth0,helpers,partials,data) {
+  this.compilerInfo = [4,'>= 1.0.0'];
+helpers = this.merge(helpers, Handlebars.helpers); data = data || {};
+  
+
+
+  return "<a href=\"#schedule\">Schedule</a>\n<a href=\"#location\">Location</a>";
+  });
+
+},{"hbsfy/runtime":13}],19:[function(require,module,exports){
+// hbsfy compiled Handlebars template
+var Handlebars = require('hbsfy/runtime');
+module.exports = Handlebars.template(function (Handlebars,depth0,helpers,partials,data) {
+  this.compilerInfo = [4,'>= 1.0.0'];
+helpers = this.merge(helpers, Handlebars.helpers); data = data || {};
+  
+
+
+  return "<a class=\"back-button\" href=\"#\">Back</a>\n<h1>Location</h1>\n<div class=\"scroller\">\n    <p>Getting location</p>\n</div>";
+  });
+
+},{"hbsfy/runtime":13}],20:[function(require,module,exports){
+// hbsfy compiled Handlebars template
+var Handlebars = require('hbsfy/runtime');
+module.exports = Handlebars.template(function (Handlebars,depth0,helpers,partials,data) {
+  this.compilerInfo = [4,'>= 1.0.0'];
+helpers = this.merge(helpers, Handlebars.helpers); data = data || {};
+  
+
+
+  return "<a class=\"back-button\" href=\"#\">Back</a>\n<h1>Schedule</h1>\n<div class=\"scroller\"></div>";
+  });
+
+},{"hbsfy/runtime":13}],21:[function(require,module,exports){
+"use strict";
+
+var Backbone = require('backbone');
+var $ = require('jquery');
+var template = require("../templates/AppointmentList.hbs");
+Backbone.$ = $;
+
+module.exports = Backbone.View.extend({
+
+    initialize: function () {
+        this.render();
+        this.collection.on("reset", this.render, this);
+    },
+
+    render: function () {
+        console.log(this.collection.toJSON());
+        this.$el.html(template(this.collection.toJSON()));
+        console.log("AppointmentList end render");
+        return this;
+    }
+
+});
+},{"../templates/AppointmentList.hbs":17,"backbone":4,"jquery":14}],22:[function(require,module,exports){
 "use strict";
 
 var Backbone = require('backbone');
@@ -12677,9 +12872,74 @@ module.exports = Backbone.View.extend({
     },
 
     render: function () {
-        this.$el.append(template({name:"Damian"}));
+        this.$el.html(template());
         return this;
     }
 
 });
-},{"../templates/Home.hbs":15,"backbone":3,"jquery":13}]},{},[1])
+},{"../templates/Home.hbs":18,"backbone":4,"jquery":14}],23:[function(require,module,exports){
+"use strict";
+
+var Backbone = require('backbone');
+var _ = require('underscore');
+var $ = require('jquery');
+var AppointmentListView = require('../views/AppointmentList');
+var models = require('../models/memory/appointment');
+var template = require("../templates/Location.hbs");
+Backbone.$ = $;
+
+module.exports = Backbone.View.extend({
+
+    initialize: function () {
+        _.bindAll(this, 'locationSuccess', 'locationError');
+        console.log("location initialize");
+        this.appointmentList = new models.FilteredAppointmentCollection();
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(this.locationSuccess, this.locationError);
+        }
+        this.render();
+    },
+
+    render: function () {
+        this.$el.html(template());
+        this.listView = new AppointmentListView({collection: this.appointmentList, el: $(".scroller", this.el)});
+        return this;
+    },
+
+    locationSuccess: function(position) {
+        this.appointmentList.fetch({reset: true, data: {latitude: position.coords.latitude, longitude: position.coords.longitude}});
+    },
+
+    locationError: function(error) {
+        console.log(error.messaga);
+    }
+
+});
+},{"../models/memory/appointment":2,"../templates/Location.hbs":19,"../views/AppointmentList":21,"backbone":4,"jquery":14,"underscore":15}],24:[function(require,module,exports){
+"use strict";
+
+var Backbone = require('backbone');
+var $ = require('jquery');
+var AppointmentListView = require('../views/AppointmentList');
+var models = require('../models/memory/appointment');
+var template = require("../templates/Schedule.hbs");
+Backbone.$ = $;
+
+module.exports = Backbone.View.extend({
+
+    initialize: function () {
+        console.log("schedule initialize");
+        this.appointmentList = new models.AppointmentCollection();
+        console.log(this.appointmentList);
+        this.appointmentList.fetch({reset: true});
+        this.render();
+    },
+
+    render: function () {
+        this.$el.html(template());
+        this.listView = new AppointmentListView({collection: this.appointmentList, el: $(".scroller", this.el)});
+        return this;
+    }
+
+});
+},{"../models/memory/appointment":2,"../templates/Schedule.hbs":20,"../views/AppointmentList":21,"backbone":4,"jquery":14}]},{},[1])
