@@ -13,7 +13,7 @@ module.exports = Backbone.View.extend({
     },
 
     render: function () {
-        this.$el.append(template({name:"Damian"}));
+        this.$el.html(template());
         return this;
     }
 
