@@ -10,4 +10,8 @@ $("body").on("click", ".back-button", function (event) {
     window.history.back();
 });
 
+// document.addEventListener("deviceready", function() {
+//     Backbone.history.start();
+// }, false);
+
 Backbone.history.start();

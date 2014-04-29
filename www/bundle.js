@@ -11,6 +11,10 @@ $("body").on("click", ".back-button", function (event) {
     window.history.back();
 });
 
+// document.addEventListener("deviceready", function() {
+//     Backbone.history.start();
+// }, false);
+
 Backbone.history.start();
 },{"./router":16,"backbone":4,"jquery":14}],2:[function(require,module,exports){
 "use strict";
