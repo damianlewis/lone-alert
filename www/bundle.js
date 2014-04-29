@@ -45,14 +45,13 @@ var findById = function (id) {
     return deferred.promise();
 };
 
-var findByPosition = function (searchLatitude, searchLongitude) {
-    var threshold = 0.02;
+var findByPosition = function (searchLatitude, searchLongitude, deviation) {
     var deferred = $.Deferred();
     var results = appointments.filter(function (element) {
         var latitude = element.latitude;
         var longitude = element.longitude;
-        if (searchLatitude >= latitude-threshold && searchLatitude <= latitude+threshold) {
-            if (searchLongitude >= longitude-threshold && searchLongitude <= longitude+threshold) {
+        if (searchLatitude >= latitude-deviation && searchLatitude <= latitude+deviation) {
+            if (searchLongitude >= longitude-deviation && searchLongitude <= longitude+deviation) {
                 return true;
             }
         }
@@ -71,7 +70,6 @@ var getAll = function () {
     deferred.resolve(results);
     return deferred.promise();
 };
-
 
 var Appointment = Backbone.Model.extend({
 
@@ -105,7 +103,7 @@ var FilteredAppointmentCollection = Backbone.Collection.extend({
 
     sync: function (method, model, options) {
         if (method === "read") {
-            findByPosition(parseFloat(options.data.latitude), parseFloat(options.data.longitude)).done(function(data) {
+            findByPosition(options.data.latitude, options.data.longitude, options.data.deviation).done(function(data) {
                 options.success(data);
             });
         }
@@ -119,7 +117,6 @@ module.exports = {
     Appointment: Appointment,
     AppointmentCollection: AppointmentCollection,
     FilteredAppointmentCollection: FilteredAppointmentCollection
-
 };
 },{"backbone":4,"jquery":14}],3:[function(require,module,exports){
 /* Notes:
@@ -12911,7 +12908,7 @@ module.exports = Backbone.View.extend({
     },
 
     locationSuccess: function(position) {
-        this.appointmentList.fetch({reset: true, data: {latitude: position.coords.latitude, longitude: position.coords.longitude}});
+        this.appointmentList.fetch({reset: true, data: {latitude: position.coords.latitude, longitude: position.coords.longitude, deviation: 0.02}}); // 0.02 is the allowed deviation for the search location.
     },
 
     locationError: function(error) {
