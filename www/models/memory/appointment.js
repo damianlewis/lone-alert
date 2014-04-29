@@ -26,14 +26,13 @@ var findById = function (id) {
     return deferred.promise();
 };
 
-var findByPosition = function (searchLatitude, searchLongitude) {
-    var threshold = 0.02;
+var findByPosition = function (searchLatitude, searchLongitude, deviation) {
     var deferred = $.Deferred();
     var results = appointments.filter(function (element) {
         var latitude = element.latitude;
         var longitude = element.longitude;
-        if (searchLatitude >= latitude-threshold && searchLatitude <= latitude+threshold) {
-            if (searchLongitude >= longitude-threshold && searchLongitude <= longitude+threshold) {
+        if (searchLatitude >= latitude-deviation && searchLatitude <= latitude+deviation) {
+            if (searchLongitude >= longitude-deviation && searchLongitude <= longitude+deviation) {
                 return true;
             }
         }
@@ -85,7 +84,7 @@ var FilteredAppointmentCollection = Backbone.Collection.extend({
 
     sync: function (method, model, options) {
         if (method === "read") {
-            findByPosition(parseFloat(options.data.latitude), parseFloat(options.data.longitude)).done(function(data) {
+            findByPosition(options.data.latitude, options.data.longitude, options.data.deviation).done(function(data) {
                 options.success(data);
             });
         }

@@ -27,7 +27,7 @@ module.exports = Backbone.View.extend({
     },
 
     locationSuccess: function(position) {
-        this.appointmentList.fetch({reset: true, data: {latitude: position.coords.latitude, longitude: position.coords.longitude}});
+        this.appointmentList.fetch({reset: true, data: {latitude: position.coords.latitude, longitude: position.coords.longitude, deviation: 0.02}}); // 0.02 is the allowed deviation for the search location.
     },
 
     locationError: function(error) {
