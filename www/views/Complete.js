@@ -11,14 +11,6 @@ module.exports = Backbone.View.extend({
     initialize: function(options) {
         this.router = options.router;
         this.render();
-        if (navigator.vibrate) {
-            console.log("vibrate");
-            navigator.vibrate(2000);
-        }
-        if (navigator.beep) {
-            console.log("beep");
-            navigator.beep(2);
-        }
     },
 
     render: function() {

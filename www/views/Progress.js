@@ -48,6 +48,14 @@ module.exports = Backbone.View.extend({
     timerComplete: function() {
         this.cancelProgress();
         this.model.set({startTime: 0});
+        if (navigator.notification.vibrate) {
+            console.log("vibrate");
+            navigator.notification.vibrate(2000);
+        }
+        if (navigator.notification.beep) {
+            console.log("beep");
+            navigator.notification.beep(2);
+        }
         var router = new Backbone.Router();
         router.navigate("appointment/"+this.model.get("id")+"/complete", {trigger: true});
     },
