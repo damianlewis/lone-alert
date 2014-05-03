@@ -1,9 +1,6 @@
-<ul>
 {{#each this}}
-    <li>
-        <a href="#appointment/{{id}}">
-            <p>{{firstName}} {{lastName}}</p>
-        </a>
-    </li>
+    <a href="#appointment/{{id}}" class="list-group-item">
+        <h5 class="list-group-item-heading">{{firstName}} {{lastName}}</h5>
+        <p class="list-group-item-text glyphicon glyphicon-time"> {{time}} / {{duration}}mins</p>
+    </a>
 {{/each}}
-</ul>
