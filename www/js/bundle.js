@@ -14397,13 +14397,13 @@ module.exports = Backbone.View.extend({
 
     initialize: function(options) {
         Vent.on("Dial:Release", this.updateAdditional, this);
-        this.additional = 0;
+        this.additional = 5; // Default additional time
         this.render();
     },
 
     render: function() {
         this.$el.html(template(this.model.attributes));
-        this.dialView = new TimerDialView({el: $("#additional", this.el), startTime: 0, maxTime: 15});
+        this.dialView = new TimerDialView({el: $("#additional", this.el), startTime: this.additional, maxTime: 15});
         return this;
     },
 
