@@ -13812,11 +13812,11 @@ helpers = this.merge(helpers, Handlebars.helpers); data = data || {};
   var buffer = "", stack1, helper, functionType="function", escapeExpression=this.escapeExpression;
 
 
-  buffer += "<div class=\"navbar navbar-inverse\">\n    <div class=\"container\">\n        <div class=\"row\">\n            <div class=\"col-xs-12 text-center\"><h4 class=\"navbar-text\">Appointment</h4></div>\n        </div>\n    </div>\n</div>\n<div class=\"container\">\n    <div class=\"row\">\n        <div class=\"col-xs-12 text-center\"><div id=\"progress\"></div></div>\n    </div>\n    <div class=\"row\">\n        <div class=\"col-xs-12\"><p class=\"text-center\">Appointment time complete</p></div>\n    </div>\n</div>\n<div class=\"navbar navbar-fixed-bottom\">\n    <div class=\"container\">\n        <div class=\"btn-group btn-group-lg btn-group-justified\">\n            <a class=\"btn btn-danger btn-lg btn-block navbar-btn\" href=\"#appointment/";
+  buffer += "<div class=\"navbar navbar-inverse\">\n    <div class=\"container\">\n        <div class=\"row\">\n            <div class=\"col-xs-12 text-center\"><h4 class=\"navbar-text\">Appointment</h4></div>\n        </div>\n    </div>\n</div>\n<div class=\"container\">\n    <div class=\"row\">\n        <div class=\"col-xs-12 text-center\"><div id=\"progress\"></div></div>\n    </div>\n    <div class=\"row\">\n        <div class=\"col-xs-12\"><p class=\"text-center\">Appointment time complete</p></div>\n    </div>\n</div>\n<div class=\"navbar navbar-fixed-bottom\">\n    <div class=\"container\">\n        <div class=\"btn-group btn-group-lg btn-group-justified\">\n            <a id=\"confirm\" class=\"btn btn-danger btn-lg btn-block navbar-btn\" href=\"#appointment/";
   if (helper = helpers.id) { stack1 = helper.call(depth0, {hash:{},data:data}); }
   else { helper = (depth0 && depth0.id); stack1 = typeof helper === functionType ? helper.call(depth0, {hash:{},data:data}) : helper; }
   buffer += escapeExpression(stack1)
-    + "/confirm\"><span class=\"glyphicon glyphicon-remove\"> FINISH</span></a>\n            <a class=\"btn btn-danger btn-lg btn-block navbar-btn\" href=\"#appointment/";
+    + "/confirm\"><span class=\"glyphicon glyphicon-remove\"> FINISH</span></a>\n            <a id=\"reset\" class=\"btn btn-danger btn-lg btn-block navbar-btn\" href=\"#appointment/";
   if (helper = helpers.id) { stack1 = helper.call(depth0, {hash:{},data:data}); }
   else { helper = (depth0 && depth0.id); stack1 = typeof helper === functionType ? helper.call(depth0, {hash:{},data:data}) : helper; }
   buffer += escapeExpression(stack1)
@@ -14068,6 +14068,7 @@ module.exports = Backbone.View.extend({
 "use strict";
 
 var Backbone = require('backbone');
+var _ = require('underscore');
 var $ = require('jquery');
 var CompleteTimerView = require('../views/CompleteTimer');
 var template = require("../templates/Complete.hbs");
@@ -14075,9 +14076,18 @@ Backbone.$ = $;
 
 module.exports = Backbone.View.extend({
 
+    events: {
+        "click #confirm": "cancelWait",
+        "click #reset": "cancelWait"
+    },
+
     initialize: function(options) {
-        this.router = options.router;
+        _.bindAll(this, 'onWaitComplete');
         this.render();
+        if (this.model.get("status") == "inprogress") {
+            this.model.set({status: "waiting"});
+            this.wait();            
+        }
     },
 
     render: function() {
@@ -14090,11 +14100,25 @@ module.exports = Backbone.View.extend({
         }
         this.timerView = new CompleteTimerView({el: $("#progress", this.el), duration: duration});
         return this;
+    },
+
+    wait: function() {
+        this.waitId = setTimeout(this.onWaitComplete, 5000); // Wait 10 seconds before goint to alert mode
+    },
+
+    onWaitComplete: function() {
+        this.cancelWait();
+        var router = new Backbone.Router();
+        router.navigate("appointment/"+this.model.get("id")+"/alert", {trigger: true});
+    },
+
+    cancelWait: function() {
+        clearTimeout(this.waitId);
     }
 
 });
 
-},{"../templates/Complete.hbs":22,"../views/CompleteTimer":36,"backbone":6,"jquery":16}],36:[function(require,module,exports){
+},{"../templates/Complete.hbs":22,"../views/CompleteTimer":36,"backbone":6,"jquery":16,"underscore":17}],36:[function(require,module,exports){
 "use strict";
 
 var Backbone = require('backbone');
