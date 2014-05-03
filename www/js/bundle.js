@@ -14258,6 +14258,7 @@ module.exports = Backbone.View.extend({
         _.bindAll(this, 'onShake');
         Vent.on("Timer:Tick", this.timerTick, this);
         Vent.on("Timer:Complete", this.timerComplete, this);
+        this.model.set({status: "inprogress"});
         this.shake = new Shake();
         this.shake.startWatch(this.onShake);
         this.render();
