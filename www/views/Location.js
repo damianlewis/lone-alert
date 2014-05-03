@@ -4,34 +4,55 @@ var Backbone = require('backbone');
 var _ = require('underscore');
 var $ = require('jquery');
 var AppointmentListView = require('../views/AppointmentList');
-var models = require('../models/memory/appointment');
 var template = require("../templates/Location.hbs");
 Backbone.$ = $;
 
 module.exports = Backbone.View.extend({
 
-    initialize: function () {
-        _.bindAll(this, 'locationSuccess', 'locationError');
-        console.log("location initialize");
-        this.appointmentList = new models.FilteredAppointmentCollection();
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(this.locationSuccess, this.locationError);
-        }
-        this.render();
+    events: {
+        "click #refresh": "onRefresh"
     },
 
-    render: function () {
+    initialize: function() {
+        console.log("location initialize");
+        _.bindAll(this, 'locationSuccess', 'locationError');
+        this.collection.on("reset", this.filterAppointments, this);
+        this.deviation = 0.02;
+        this.render();
+        this.getLocation();
+    },
+
+    render: function() {
         this.$el.html(template());
-        this.listView = new AppointmentListView({collection: this.appointmentList, el: $(".scroller", this.el)});
         return this;
     },
 
+    getLocation: function() {
+        if (navigator.geolocation) {
+            console.log("geolocation active");
+            navigator.geolocation.getCurrentPosition(this.locationSuccess, this.locationError);
+        }
+    },
+
     locationSuccess: function(position) {
-        this.appointmentList.fetch({reset: true, data: {latitude: position.coords.latitude, longitude: position.coords.longitude, deviation: 0.02}}); // 0.02 is the allowed deviation for the search location.
+        this.searchLatitude = position.coords.latitude;
+        this.searchLongitude = position.coords.longitude;
+        this.collection.fetch({reset: true});
     },
 
     locationError: function(error) {
         console.log(error.messaga);
+    },
+
+    filterAppointments: function(collection) {
+        var filtereredCollection = collection.byPosition(this.searchLatitude, this.searchLongitude, this.deviation);
+        this.listView = new AppointmentListView({collection: filtereredCollection, el: $(".scroller", this.el)});
+        filtereredCollection.trigger("filtered");
+    },
+
+    onRefresh: function() {
+        event.preventDefault();
+        this.getLocation();
     }
 
 });
