@@ -1,6 +1,16 @@
 {{#each this}}
     <a href="#appointment/{{id}}" class="list-group-item">
-        <h5 class="list-group-item-heading">{{firstName}} {{lastName}}</h5>
-        <p class="list-group-item-text glyphicon glyphicon-time"> {{time}} / {{duration}}mins</p>
+        <div class="container"></div>
+            <div class="row">
+                <div class="col-xs-4">
+                    <img src="http://maps.googleapis.com/maps/api/staticmap?center={{latitude}},{{longitude}}&zoom=13&size=80x80&markers=size:small%7C{{latitude}},{{longitude}}&style=feature:all%7Celement:all%7Chue:0x428bca%7Clightness:-10%7Csaturation:-60%7Cvisibility:simplified&sensor=false">
+                </div>
+                <div class="col-xs-8">
+                    <h5 class="list-group-item-heading">{{firstName}} {{lastName}}</h5>
+                    <p><small>{{address}}, {{city}}</small></p>
+                    <p class="list-group-item-text glyphicon glyphicon-time"> {{time}} / {{duration}}mins</p>
+                </div>
+            </div>
+        </div>
     </a>
 {{/each}}

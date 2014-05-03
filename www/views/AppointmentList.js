@@ -8,7 +8,6 @@ Backbone.$ = $;
 module.exports = Backbone.View.extend({
 
     initialize: function () {
-        // this.render();
         this.collection.on("reset", this.render, this);
         this.collection.on("filtered", this.render, this);
     },
