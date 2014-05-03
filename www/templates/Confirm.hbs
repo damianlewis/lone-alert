@@ -1,0 +1,38 @@
+<div class="navbar navbar-inverse">
+    <div class="container">
+        <div class="row">
+            <div class="col-xs-4"><a id="back-button" class="btn btn-default navbar-btn" href="#"><span class="glyphicon glyphicon-chevron-left"></span></a></div>
+            <div class="col-xs-4 text-center"><h4 class="navbar-text">Appointment</h4></div>
+        </div>
+    </div>
+</div>
+<div class="container">
+    <div class="row">
+        <div class="col-xs-12 text-center">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h4>{{firstName}} {{lastName}}</h4>
+                </div>
+                <div class="panel-body">
+                    <address>
+                    <strong>{{address}}</strong><br>
+                    {{city}}<br>
+                    {{county}}<br>
+                    {{postCode}}
+                    </address>
+                    <hr>
+                    <p class="glyphicon glyphicon-time"> {{time}} / {{duration}}mins</p>
+                    {{#if actual}}
+                        <hr>
+                        <p class="glyphicon glyphicon-info-sign"> {{actual}}mins</p>
+                    {{/if}}
+                </div>
+            </div>            
+        </div>
+    </div>
+</div>
+<div class="navbar navbar-fixed-bottom">
+    <div class="container">
+        <a id="home" class="btn btn-primary btn-lg btn-block navbar-btn" href="/"><span class="glyphicon glyphicon-ok"> Confirm</span></a>
+    </div>
+</div>
