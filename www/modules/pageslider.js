@@ -22,7 +22,7 @@ module.exports = function PageSlider(container) {
             this.slidePageFrom(page);
             return;
         }
-        if (state === stateHistory[l-2]) {
+        if (state === stateHistory[l-2] || state === stateHistory[0]) {
             stateHistory.pop();
             this.slidePageFrom(page, 'left');
         } else {
