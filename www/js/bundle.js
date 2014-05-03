@@ -3,83 +3,79 @@ var Backbone = require('backbone');
 var $ = require('jquery');
 Backbone.$ = $;
 
-var Router = require('./router');
+var Router = require('../router');
 var router = new Router();
 
-$("body").on("click", ".back-button", function (event) {
-    event.preventDefault();
-    window.history.back();
-});
+var app = {
+    // Application Constructor
+    initialize: function() {
+        this.bindEvents();
 
-// document.addEventListener("deviceready", function() {
-//     Backbone.history.start();
-// }, false);
+        $("body").on("click", "#back-button", function (event) {
+            event.preventDefault();
+            window.history.back();
+        });
 
-Backbone.history.start();
-},{"./router":16,"backbone":4,"jquery":14}],2:[function(require,module,exports){
+        $("body").on("click", "#home", function (event) {
+            event.preventDefault();
+            router.navigate("/", {trigger: true});
+        });
+    },
+    // Bind Event Listeners
+    //
+    // Bind any events that are required on startup. Common events are:
+    // 'load', 'deviceready', 'offline', and 'online'.
+    bindEvents: function() {
+        document.addEventListener('deviceready', this.onDeviceReady, false);
+    },
+    // deviceready Event Handler
+    //
+    // The scope of 'this' is the event. In order to call the 'receivedEvent'
+    // function, we must explicity call 'app.receivedEvent(...);'
+    onDeviceReady: function() {
+        // app.receivedEvent('deviceready');
+        console.log("checking device features");
+        if (navigator.geolocation) {
+            console.log("geolocation");
+        }
+        if (navigator.accelerometer) {
+            console.log("accelerometer");
+        }
+        Backbone.history.start();
+    },
+};
+
+app.initialize();
+
+},{"../router":18,"backbone":6,"jquery":16}],2:[function(require,module,exports){
 "use strict";
 
 var Backbone = require('backbone');
 var $ = require('jquery');
 
 var appointments = [
-    {"id": 1, "firstName": "Damian", "lastName": "Lewis", "address": "123 Market St", "city": "Hemel Hempstead", "Region": "Herts", "postCode": "HP12 4GH", "latitude": 51.7140143, "longitude": -0.3340304, "date": "2014-04-28", "time": "10:00", "duration": "45"},
-    {"id": 2, "firstName": "Freya", "lastName": "Lewis", "address": "54 High St", "city": "St Albans", "Region": "Herts", "postCode": "AL1 4DF", "latitude": 37.785868, "longitude": -122.4064973, "date": "2014-04-28", "time": "11:00", "duration": "45"},
-    {"id": 3, "firstName": "Thoms", "lastName": "Lewis", "address": "78 Station Rd", "city": "Hatfield", "Region": "Herts", "postCode": "AL10 6GH", "latitude": 53.7140143, "longitude": -0.5340304, "date": "2014-04-28", "time": "12:00", "duration": "45"},
+    {"id": 1, "firstName": "Damian", "lastName": "Lewis", "address": "123 Market St", "city": "Hemel Hempstead", "county": "Herts", "postCode": "HP12 4GH", "latitude": 51.7140143, "longitude": -0.3340304, "date": "2014-04-28", "time": "10:00", "duration": 3, "startTime": 0, "actual": 0, "additional": 0, "status": "scheduled"},
+    {"id": 2, "firstName": "Freya", "lastName": "Lewis", "address": "54 High St", "city": "St Albans", "county": "Herts", "postCode": "AL1 4DF", "latitude": 37.785868, "longitude": -122.4064973, "date": "2014-04-28", "time": "11:00", "duration": 45, "startTime": 0, "actual": 0, "additional": 0, "status": "scheduled"},
+    {"id": 3, "firstName": "Thoms", "lastName": "Lewis", "address": "78 Station Rd", "city": "Hatfield", "county": "Herts", "postCode": "AL10 6GH", "latitude": 53.7140143, "longitude": -0.5340304, "date": "2014-04-28", "time": "12:00", "duration": 45, "startTime": 0, "actual": 0, "additional": 0, "status": "scheduled"},
 ];
 
-var findById = function (id) {
-    var deferred = $.Deferred();
-    var appointment = null;
-    var l = appointments.length;
-    var i;
-
-    for (i = 0; i < l; i = i + 1) {
-        if (appointments[i].id === id) {
-            appointment = appointments[i];
-            break;
-        }
-    }
-
-    deferred.resolve(appointment);
-    return deferred.promise();
-};
-
-var findByPosition = function (searchLatitude, searchLongitude, deviation) {
-    var deferred = $.Deferred();
-    var results = appointments.filter(function (element) {
-        var latitude = element.latitude;
-        var longitude = element.longitude;
-        if (searchLatitude >= latitude-deviation && searchLatitude <= latitude+deviation) {
-            if (searchLongitude >= longitude-deviation && searchLongitude <= longitude+deviation) {
-                return true;
-            }
-        }
-    });
-
-    console.log(JSON.stringify(results));
-    deferred.resolve(results);
-    return deferred.promise();
-};
-
-var getAll = function () {
+var getAll = function() {
     var deferred = $.Deferred();
     var results = appointments;
 
-    console.log(JSON.stringify(results));
     deferred.resolve(results);
     return deferred.promise();
 };
 
 var Appointment = Backbone.Model.extend({
 
-    sync: function (method, model, options) {
-        if (method === "read") {
-            findById(parseInt(this.id)).done(function (data) {
-                options.success(data);
-            });
-        }
-    }
+    // sync: function(method, model, options) {
+    //     if (method === "read") {
+    //         findById(parseInt(this.id)).done(function (data) {
+    //             options.success(data);
+    //         });
+    //     }
+    // }
 
 });
 
@@ -87,26 +83,22 @@ var AppointmentCollection = Backbone.Collection.extend({
 
     model: Appointment,
 
-    sync: function (method, model, options) {
+    sync: function(method, model, options) {
         if (method === "read") {
-            getAll().done(function(data) {
+            getAll().done(function (data) {
                 options.success(data);
             });
         }
-    }
+    },
 
-});
+    byPosition: function(searchLatitude, searchLongitude, deviation) {
+        var filtered = this.filter(function (appointment) {
+            var latitude = appointment.get("latitude");
+            var longitude = appointment.get("longitude");
+            return (searchLatitude >= latitude-deviation && searchLatitude <= latitude+deviation && searchLongitude >= longitude-deviation && searchLongitude <= longitude+deviation);
+        });
 
-var FilteredAppointmentCollection = Backbone.Collection.extend({
-
-    model: Appointment,
-
-    sync: function (method, model, options) {
-        if (method === "read") {
-            findByPosition(options.data.latitude, options.data.longitude, options.data.deviation).done(function(data) {
-                options.success(data);
-            });
-        }
+        return new AppointmentCollection(filtered);
     }
 
 });
@@ -115,10 +107,874 @@ Backbone.$ = $;
 
 module.exports = {
     Appointment: Appointment,
-    AppointmentCollection: AppointmentCollection,
-    FilteredAppointmentCollection: FilteredAppointmentCollection
+    AppointmentCollection: AppointmentCollection
 };
-},{"backbone":4,"jquery":14}],3:[function(require,module,exports){
+},{"backbone":6,"jquery":16}],3:[function(require,module,exports){
+module.exports = function Shake() {
+    var shake = {},
+        watchId = null,
+        options = { frequency: 300 },
+        previousAcceleration = { x: null, y: null, z: null },
+        shakeCallBack = null;
+    
+    // Start watching the accelerometer for a shake gesture
+    shake.startWatch = function (onShake) {
+        console.log("shake start watch");
+        if (onShake) {
+            shakeCallBack = onShake;
+        }
+        if (navigator.accelerometer) {
+            watchId = navigator.accelerometer.watchAcceleration(getAccelerationSnapshot, handleError, options);
+        }
+    };
+    
+    // Stop watching the accelerometer for a shake gesture
+    shake.stopWatch = function () {
+        console.log("shake stop watch");
+        if (watchId !== null) {
+            if (navigator.accelerometer) {
+                navigator.accelerometer.clearWatch(watchId);
+            }
+            watchId = null;
+        }
+    };
+    
+    // Gets the current acceleration snapshot from the last accelerometer watch
+    function getAccelerationSnapshot() {
+        if (navigator.accelerometer) {
+            navigator.accelerometer.getCurrentAcceleration(assessCurrentAcceleration, handleError);
+        }
+    }
+    
+    // Assess the current acceleration parameters to determine a shake
+    function assessCurrentAcceleration(acceleration) {
+        var accelerationChange = {};
+        if (previousAcceleration.x !== null) {
+            accelerationChange.x = Math.abs(previousAcceleration.x, acceleration.x);
+            accelerationChange.y = Math.abs(previousAcceleration.y, acceleration.y);
+            accelerationChange.z = Math.abs(previousAcceleration.z, acceleration.z);
+        }
+        if (accelerationChange.x + accelerationChange.y + accelerationChange.z > 30) {
+            // Shake detected
+            if (typeof (shakeCallBack) === "function") {
+                shakeCallBack();
+            }
+            // shake.stopWatch();
+            // setTimeout(shake.startWatch, 1000);
+            previousAcceleration = { 
+                x: null, 
+                y: null, 
+                z: null
+            }
+        } else {
+            previousAcceleration = {
+                x: acceleration.x,
+                y: acceleration.y,
+                z: acceleration.z
+            }
+        }
+    }
+
+    // Handle errors here
+    function handleError() {
+    }
+    
+    return shake;
+};
+},{}],4:[function(require,module,exports){
+/*!jQuery Knob*/
+/**
+ * Downward compatible, touchable dial
+ *
+ * Version: 1.2.8
+ * Requires: jQuery v1.7+
+ *
+ * Copyright (c) 2012 Anthony Terrien
+ * Under MIT License (http://www.opensource.org/licenses/mit-license.php)
+ *
+ * Thanks to vor, eskimoblood, spiffistan, FabrizioC
+ */
+module.exports = function Knob($) {
+
+    /**
+     * Kontrol library
+     */
+    "use strict";
+
+    /**
+     * Definition of globals and core
+     */
+    var k = {}, // kontrol
+        max = Math.max,
+        min = Math.min;
+
+    k.c = {};
+    k.c.d = $(document);
+    k.c.t = function (e) {
+        return e.originalEvent.touches.length - 1;
+    };
+
+    /**
+     * Kontrol Object
+     *
+     * Definition of an abstract UI control
+     *
+     * Each concrete component must call this one.
+     * <code>
+     * k.o.call(this);
+     * </code>
+     */
+    k.o = function () {
+        var s = this;
+
+        this.o = null; // array of options
+        this.$ = null; // jQuery wrapped element
+        this.i = null; // mixed HTMLInputElement or array of HTMLInputElement
+        this.g = null; // deprecated 2D graphics context for 'pre-rendering'
+        this.v = null; // value ; mixed array or integer
+        this.cv = null; // change value ; not commited value
+        this.x = 0; // canvas x position
+        this.y = 0; // canvas y position
+        this.w = 0; // canvas width
+        this.h = 0; // canvas height
+        this.$c = null; // jQuery canvas element
+        this.c = null; // rendered canvas context
+        this.t = 0; // touches index
+        this.isInit = false;
+        this.fgColor = null; // main color
+        this.pColor = null; // previous color
+        this.dH = null; // draw hook
+        this.cH = null; // change hook
+        this.eH = null; // cancel hook
+        this.rH = null; // release hook
+        this.scale = 1; // scale factor
+        this.relative = false;
+        this.relativeWidth = false;
+        this.relativeHeight = false;
+        this.$div = null; // component div
+
+        this.run = function () {
+            var cf = function (e, conf) {
+                var k;
+                for (k in conf) {
+                    s.o[k] = conf[k];
+                }
+                s._carve().init();
+                s._configure()
+                 ._draw();
+            };
+
+            if(this.$.data('kontroled')) return;
+            this.$.data('kontroled', true);
+
+            this.extend();
+            this.o = $.extend(
+                {
+                    // Config
+                    min : this.$.data('min') !== undefined ? this.$.data('min') : 0,
+                    max : this.$.data('max') !== undefined ? this.$.data('max') : 100,
+                    stopper : true,
+                    readOnly : this.$.data('readonly') || (this.$.attr('readonly') === 'readonly'),
+
+                    // UI
+                    cursor : (this.$.data('cursor') === true && 30) ||
+                                this.$.data('cursor') || 0,
+                    thickness : (
+                                    this.$.data('thickness') &&
+                                    Math.max(Math.min(this.$.data('thickness'), 1), 0.01)
+                                ) || 0.35,
+                    lineCap : this.$.data('linecap') || 'butt',
+                    width : this.$.data('width') || 200,
+                    height : this.$.data('height') || 200,
+                    displayInput : this.$.data('displayinput') == null || this.$.data('displayinput'),
+                    displayPrevious : this.$.data('displayprevious'),
+                    fgColor : this.$.data('fgcolor') || '#87CEEB',
+                    inputColor: this.$.data('inputcolor'),
+                    font: this.$.data('font') || 'Arial',
+                    fontWeight: this.$.data('font-weight') || 'bold',
+                    inline : false,
+                    step : this.$.data('step') || 1,
+                    rotation: this.$.data('rotation'),
+
+                    // Hooks
+                    draw : null, // function () {}
+                    change : null, // function (value) {}
+                    cancel : null, // function () {}
+                    release : null, // function (value) {}
+
+                    // Output formatting, allows to add unit: %, ms ...
+                    format: function(v) {
+                        return v;
+                    },
+                    parse: function (v) {
+                        return parseFloat(v);
+                    }
+                }, this.o
+            );
+
+            // finalize options
+            this.o.flip = this.o.rotation === 'anticlockwise' || this.o.rotation === 'acw';
+            if(!this.o.inputColor) {
+                this.o.inputColor = this.o.fgColor;
+            }
+
+            // routing value
+            if(this.$.is('fieldset')) {
+
+                // fieldset = array of integer
+                this.v = {};
+                this.i = this.$.find('input');
+                this.i.each(function(k) {
+                    var $this = $(this);
+                    s.i[k] = $this;
+                    s.v[k] = s.o.parse($this.val());
+
+                    $this.bind(
+                        'change blur'
+                        , function () {
+                            var val = {};
+                            val[k] = $this.val();
+                            s.val(val);
+                        }
+                    );
+                });
+                this.$.find('legend').remove();
+
+            } else {
+
+                // input = integer
+                this.i = this.$;
+                this.v = this.o.parse(this.$.val());
+                (this.v === '') && (this.v = this.o.min);
+
+                this.$.bind(
+                    'change blur'
+                    , function () {
+                        s.val(s._validate(s.o.parse(s.$.val())));
+                    }
+                );
+
+            }
+
+            (!this.o.displayInput) && this.$.hide();
+
+            // adds needed DOM elements (canvas, div)
+            this.$c = $(document.createElement('canvas')).attr({
+                width: this.o.width,
+                height: this.o.height
+            });
+
+            // wraps all elements in a div
+            // add to DOM before Canvas init is triggered
+            this.$div = $('<div style="'
+                + (this.o.inline ? 'display:inline;' : '')
+                + 'width:' + this.o.width + 'px;height:' + this.o.height + 'px;'
+                + '"></div>');
+
+            this.$.wrap(this.$div).before(this.$c);
+            this.$div = this.$.parent();
+
+            if (typeof G_vmlCanvasManager !== 'undefined') {
+              G_vmlCanvasManager.initElement(this.$c[0]);
+            }
+
+            this.c = this.$c[0].getContext ? this.$c[0].getContext('2d') : null;
+
+            if (!this.c) {
+                throw {
+                    name:        "CanvasNotSupportedException",
+                    message:     "Canvas not supported. Please use excanvas on IE8.0.",
+                    toString:    function(){return this.name + ": " + this.message}
+                }
+            }
+
+            // hdpi support
+            this.scale = (window.devicePixelRatio || 1) /
+                        (
+                            this.c.webkitBackingStorePixelRatio ||
+                            this.c.mozBackingStorePixelRatio ||
+                            this.c.msBackingStorePixelRatio ||
+                            this.c.oBackingStorePixelRatio ||
+                            this.c.backingStorePixelRatio || 1
+                        );
+
+            // detects relative width / height
+            this.relativeWidth = ((this.o.width % 1 !== 0) &&
+                this.o.width.indexOf('%'));
+            this.relativeHeight = ((this.o.height % 1 !== 0) &&
+                this.o.height.indexOf('%'));
+            this.relative = (this.relativeWidth || this.relativeHeight);
+
+            // computes size and carves the component
+            this._carve();
+
+            // prepares props for transaction
+            if (this.v instanceof Object) {
+                this.cv = {};
+                this.copy(this.v, this.cv);
+            } else {
+                this.cv = this.v;
+            }
+
+            // binds configure event
+            this.$
+                .bind("configure", cf)
+                .parent()
+                .bind("configure", cf);
+
+            // finalize init
+            this._listen()
+                ._configure()
+                ._xy()
+                .init();
+
+            this.isInit = true;
+
+            this.$.val(this.o.format(this.v));
+            this._draw();
+
+            return this;
+        };
+
+        this._carve = function() {
+            if(this.relative) {
+                var w = this.relativeWidth ?
+                            this.$div.parent().width() *
+                            parseInt(this.o.width) / 100 :
+                            this.$div.parent().width(),
+                    h = this.relativeHeight ?
+                            this.$div.parent().height() *
+                            parseInt(this.o.height) / 100 :
+                            this.$div.parent().height();
+
+                // apply relative
+                this.w = this.h = Math.min(w, h);
+            } else {
+                this.w = this.o.width;
+                this.h = this.o.height;
+            }
+
+            // finalize div
+            this.$div.css({
+                'width': this.w + 'px',
+                'height': this.h + 'px'
+            });
+
+            // finalize canvas with computed width
+            this.$c.attr({
+                width: this.w,
+                height: this.h
+            });
+
+            // scaling
+            if (this.scale !== 1) {
+                this.$c[0].width = this.$c[0].width * this.scale;
+                this.$c[0].height = this.$c[0].height * this.scale;
+                this.$c.width(this.w);
+                this.$c.height(this.h);
+            }
+
+            return this;
+        }
+
+        this._draw = function () {
+
+            // canvas pre-rendering
+            var d = true;
+
+            s.g = s.c;
+
+            s.clear();
+
+            s.dH
+            && (d = s.dH());
+
+            (d !== false) && s.draw();
+
+        };
+
+        this._touch = function (e) {
+
+            var touchMove = function (e) {
+
+                var v = s.xy2val(
+                            e.originalEvent.touches[s.t].pageX,
+                            e.originalEvent.touches[s.t].pageY
+                            );
+
+                if (v == s.cv) return;
+
+                if (s.cH && (s.cH(v) === false)) return;
+
+                s.change(s._validate(v));
+                s._draw();
+            };
+
+            // get touches index
+            this.t = k.c.t(e);
+
+            // First touch
+            touchMove(e);
+
+            // Touch events listeners
+            k.c.d
+                .bind("touchmove.k", touchMove)
+                .bind(
+                    "touchend.k"
+                    , function () {
+                        k.c.d.unbind('touchmove.k touchend.k');
+                        s.val(s.cv);
+                    }
+                );
+
+            return this;
+        };
+
+        this._mouse = function (e) {
+
+            var mouseMove = function (e) {
+                var v = s.xy2val(e.pageX, e.pageY);
+
+                if (v == s.cv) return;
+
+                if (s.cH && (s.cH(v) === false)) return;
+
+                s.change(s._validate(v));
+                s._draw();
+            };
+
+            // First click
+            mouseMove(e);
+
+            // Mouse events listeners
+            k.c.d
+                .bind("mousemove.k", mouseMove)
+                .bind(
+                    // Escape key cancel current change
+                    "keyup.k"
+                    , function (e) {
+                        if (e.keyCode === 27) {
+                            k.c.d.unbind("mouseup.k mousemove.k keyup.k");
+
+                            if (
+                                s.eH
+                                && (s.eH() === false)
+                            ) return;
+
+                            s.cancel();
+                        }
+                    }
+                )
+                .bind(
+                    "mouseup.k"
+                    , function (e) {
+                        k.c.d.unbind('mousemove.k mouseup.k keyup.k');
+                        s.val(s.cv);
+                    }
+                );
+
+            return this;
+        };
+
+        this._xy = function () {
+            var o = this.$c.offset();
+            this.x = o.left;
+            this.y = o.top;
+            return this;
+        };
+
+        this._listen = function () {
+
+            if (!this.o.readOnly) {
+                this.$c
+                    .bind(
+                        "mousedown"
+                        , function (e) {
+                            e.preventDefault();
+                            s._xy()._mouse(e);
+                         }
+                    )
+                    .bind(
+                        "touchstart"
+                        , function (e) {
+                            e.preventDefault();
+                            s._xy()._touch(e);
+                         }
+                    );
+
+                this.listen();
+            } else {
+                this.$.attr('readonly', 'readonly');
+            }
+
+            if(this.relative) {
+                $(window).resize(function() {
+                    s._carve()
+                     .init();
+                    s._draw();
+                });
+            }
+
+            return this;
+        };
+
+        this._configure = function () {
+
+            // Hooks
+            if (this.o.draw) this.dH = this.o.draw;
+            if (this.o.change) this.cH = this.o.change;
+            if (this.o.cancel) this.eH = this.o.cancel;
+            if (this.o.release) this.rH = this.o.release;
+
+            if (this.o.displayPrevious) {
+                this.pColor = this.h2rgba(this.o.fgColor, "0.4");
+                this.fgColor = this.h2rgba(this.o.fgColor, "0.6");
+            } else {
+                this.fgColor = this.o.fgColor;
+            }
+
+            return this;
+        };
+
+        this._clear = function () {
+            this.$c[0].width = this.$c[0].width;
+        };
+
+        this._validate = function(v) {
+            return (~~ (((v < 0) ? -0.5 : 0.5) + (v/this.o.step))) * this.o.step;
+        };
+
+        // Abstract methods
+        this.listen = function () {}; // on start, one time
+        this.extend = function () {}; // each time configure triggered
+        this.init = function () {}; // each time configure triggered
+        this.change = function (v) {}; // on change
+        this.val = function (v) {}; // on release
+        this.xy2val = function (x, y) {}; //
+        this.draw = function () {}; // on change / on release
+        this.clear = function () { this._clear(); };
+
+        // Utils
+        this.h2rgba = function (h, a) {
+            var rgb;
+            h = h.substring(1,7)
+            rgb = [parseInt(h.substring(0,2),16)
+                   ,parseInt(h.substring(2,4),16)
+                   ,parseInt(h.substring(4,6),16)];
+            return "rgba(" + rgb[0] + "," + rgb[1] + "," + rgb[2] + "," + a + ")";
+        };
+
+        this.copy = function (f, t) {
+            for (var i in f) { t[i] = f[i]; }
+        };
+    };
+
+
+    /**
+     * k.Dial
+     */
+    k.Dial = function () {
+        k.o.call(this);
+
+        this.startAngle = null;
+        this.xy = null;
+        this.radius = null;
+        this.lineWidth = null;
+        this.cursorExt = null;
+        this.w2 = null;
+        this.PI2 = 2*Math.PI;
+
+        this.extend = function () {
+            this.o = $.extend(
+                {
+                    bgColor : this.$.data('bgcolor') || '#EEEEEE',
+                    angleOffset : this.$.data('angleoffset') || 0,
+                    angleArc : this.$.data('anglearc') || 360,
+                    inline : true
+                }, this.o
+            );
+        };
+
+        this.val = function (v, triggerRelease) {
+            if (null != v) {
+
+                // reverse format
+                v = this.o.parse(v);
+
+                if (
+                    triggerRelease !== false && (v != this.v) && this.rH &&
+                        (this.rH(v) === false)
+                ) return;
+
+                this.cv = this.o.stopper ? max(min(v, this.o.max), this.o.min) : v;
+                this.v = this.cv;
+                this.$.val(this.o.format(this.v));
+                this._draw();
+            } else {
+                return this.v;
+            }
+        };
+
+        this.xy2val = function (x, y) {
+            var a, ret;
+
+            a = Math.atan2(
+                        x - (this.x + this.w2)
+                        , - (y - this.y - this.w2)
+                    ) - this.angleOffset;
+
+            if (this.o.flip) {
+                a = this.angleArc - a - this.PI2;
+            }
+
+            if(this.angleArc != this.PI2 && (a < 0) && (a > -0.5)) {
+                // if isset angleArc option, set to min if .5 under min
+                a = 0;
+            } else if (a < 0) {
+                a += this.PI2;
+            }
+
+            ret = ~~ (0.5 + (a * (this.o.max - this.o.min) / this.angleArc))
+                    + this.o.min;
+
+            this.o.stopper && (ret = max(min(ret, this.o.max), this.o.min));
+
+            return ret;
+        };
+
+        this.listen = function () {
+            // bind MouseWheel
+            var s = this, mwTimerStop, mwTimerRelease,
+                mw = function (e) {
+                    e.preventDefault();
+
+                    var ori = e.originalEvent
+                        ,deltaX = ori.detail || ori.wheelDeltaX
+                        ,deltaY = ori.detail || ori.wheelDeltaY
+                        ,v = s._validate(s.o.parse(s.$.val()))
+                            + (deltaX>0 || deltaY>0 ? s.o.step : deltaX<0 || deltaY<0 ? -s.o.step : 0);
+
+                    v = max(min(v, s.o.max), s.o.min);
+
+                    s.val(v, false);
+
+                    if(s.rH) {
+                        // Handle mousewheel stop
+                        clearTimeout(mwTimerStop);
+                        mwTimerStop = setTimeout(function() {
+                            s.rH(v);
+                            mwTimerStop = null;
+                        }, 100);
+
+                        // Handle mousewheel releases
+                        if(!mwTimerRelease) {
+                            mwTimerRelease = setTimeout(function() {
+                                if(mwTimerStop) s.rH(v);
+                                mwTimerRelease = null;
+                            }, 200);
+                        }
+                    }
+                }
+                , kval, to, m = 1, kv = {37:-s.o.step, 38:s.o.step, 39:s.o.step, 40:-s.o.step};
+
+            this.$
+                .bind(
+                    "keydown"
+                    ,function (e) {
+                        var kc = e.keyCode;
+
+                        // numpad support
+                        if(kc >= 96 && kc <= 105) {
+                            kc = e.keyCode = kc - 48;
+                        }
+
+                        kval = parseInt(String.fromCharCode(kc));
+
+                        if (isNaN(kval)) {
+
+                            (kc !== 13)         // enter
+                            && (kc !== 8)       // bs
+                            && (kc !== 9)       // tab
+                            && (kc !== 189)     // -
+                            && (kc !== 190 || s.$.val().match(/\./))     // . only allowed once
+                            && e.preventDefault();
+
+                            // arrows
+                            if ($.inArray(kc,[37,38,39,40]) > -1) {
+                                e.preventDefault();
+
+                                var v = s.o.parse(s.$.val()) + kv[kc] * m;
+                                s.o.stopper && (v = max(min(v, s.o.max), s.o.min));
+
+                                s.change(v);
+                                s._draw();
+
+                                // long time keydown speed-up
+                                to = window.setTimeout(
+                                    function () { m *= 2; }, 30
+                                );
+                            }
+                        }
+                    }
+                )
+                .bind(
+                    "keyup"
+                    ,function (e) {
+                        if (isNaN(kval)) {
+                            if (to) {
+                                window.clearTimeout(to);
+                                to = null;
+                                m = 1;
+                                s.val(s.$.val());
+                            }
+                        } else {
+                            // kval postcond
+                            (s.$.val() > s.o.max && s.$.val(s.o.max))
+                            || (s.$.val() < s.o.min && s.$.val(s.o.min));
+                        }
+
+                    }
+                );
+
+            this.$c.bind("mousewheel DOMMouseScroll", mw);
+            this.$.bind("mousewheel DOMMouseScroll", mw)
+        };
+
+        this.init = function () {
+
+            if (
+                this.v < this.o.min
+                || this.v > this.o.max
+            ) this.v = this.o.min;
+
+            this.$.val(this.v);
+            this.w2 = this.w / 2;
+            this.cursorExt = this.o.cursor / 100;
+            this.xy = this.w2 * this.scale;
+            this.lineWidth = this.xy * this.o.thickness;
+            this.lineCap = this.o.lineCap;
+            this.radius = this.xy - this.lineWidth / 2;
+
+            this.o.angleOffset
+            && (this.o.angleOffset = isNaN(this.o.angleOffset) ? 0 : this.o.angleOffset);
+
+            this.o.angleArc
+            && (this.o.angleArc = isNaN(this.o.angleArc) ? this.PI2 : this.o.angleArc);
+
+            // deg to rad
+            this.angleOffset = this.o.angleOffset * Math.PI / 180;
+            this.angleArc = this.o.angleArc * Math.PI / 180;
+
+            // compute start and end angles
+            this.startAngle = 1.5 * Math.PI + this.angleOffset;
+            this.endAngle = 1.5 * Math.PI + this.angleOffset + this.angleArc;
+
+            var s = max(
+                            String(Math.abs(this.o.max)).length
+                            , String(Math.abs(this.o.min)).length
+                            , 2
+                            ) + 2;
+
+            this.o.displayInput
+                && this.i.css({
+                        'width' : ((this.w / 2 + 4) >> 0) + 'px'
+                        ,'height' : ((this.w / 3) >> 0) + 'px'
+                        ,'position' : 'absolute'
+                        ,'vertical-align' : 'middle'
+                        ,'margin-top' : ((this.w / 3) >> 0) + 'px'
+                        ,'margin-left' : '-' + ((this.w * 3 / 4 + 2) >> 0) + 'px'
+                        ,'border' : 0
+                        ,'background' : 'none'
+                        ,'font' : this.o.fontWeight + ' ' + ((this.w / s) >> 0) + 'px ' + this.o.font
+                        ,'text-align' : 'center'
+                        ,'color' : this.o.inputColor || this.o.fgColor
+                        ,'padding' : '0px'
+                        ,'-webkit-appearance': 'none'
+                        })
+                || this.i.css({
+                        'width' : '0px'
+                        ,'visibility' : 'hidden'
+                        });
+        };
+
+        this.change = function (v) {
+            this.cv = v;
+            this.$.val(this.o.format(v));
+        };
+
+        this.angle = function (v) {
+            return (v - this.o.min) * this.angleArc / (this.o.max - this.o.min);
+        };
+
+        this.arc = function (v) {
+          var sa, ea;
+          v = this.angle(v);
+          if (this.o.flip) {
+              sa = this.endAngle + 0.00001;
+              ea = sa - v - 0.00001;
+          } else {
+              sa = this.startAngle - 0.00001;
+              ea = sa + v + 0.00001;
+          }
+          this.o.cursor
+              && (sa = ea - this.cursorExt)
+              && (ea = ea + this.cursorExt);
+          return {
+              s: sa,
+              e: ea,
+              d: this.o.flip && !this.o.cursor
+          };
+        };
+
+        this.draw = function () {
+
+            var c = this.g,                 // context
+                a = this.arc(this.cv)       // Arc
+                , pa                        // Previous arc
+                , r = 1;
+
+            c.lineWidth = this.lineWidth;
+            c.lineCap = this.lineCap;
+
+            c.beginPath();
+                c.strokeStyle = this.o.bgColor;
+                c.arc(this.xy, this.xy, this.radius, this.endAngle - 0.00001, this.startAngle + 0.00001, true);
+            c.stroke();
+
+            if (this.o.displayPrevious) {
+                pa = this.arc(this.v);
+                c.beginPath();
+                    c.strokeStyle = this.pColor;
+                    c.arc(this.xy, this.xy, this.radius, pa.s, pa.e, pa.d);
+                c.stroke();
+                r = (this.cv == this.v);
+            }
+
+            c.beginPath();
+                c.strokeStyle = r ? this.o.fgColor : this.fgColor ;
+                c.arc(this.xy, this.xy, this.radius, a.s, a.e, a.d);
+            c.stroke();
+        };
+
+        this.cancel = function () {
+            this.val(this.v);
+        };
+    };
+
+    $.fn.dial = $.fn.knob = function (o) {
+        return this.each(
+            function () {
+                var d = new k.Dial();
+                d.o = o;
+                d.$ = $(this);
+                d.run();
+            }
+        ).parent();
+    };
+
+}
+
+},{}],5:[function(require,module,exports){
 /* Notes:
  * - History management is currently done using window.location.hash.  This could easily be changed to use Push State instead.
  * - jQuery dependency for now. This could also be easily removed.
@@ -143,7 +999,7 @@ module.exports = function PageSlider(container) {
             this.slidePageFrom(page);
             return;
         }
-        if (state === stateHistory[l-2]) {
+        if (state === stateHistory[l-2] || state === stateHistory[0]) {
             stateHistory.pop();
             this.slidePageFrom(page, 'left');
         } else {
@@ -181,7 +1037,7 @@ module.exports = function PageSlider(container) {
     }
 
 }
-},{"jquery":14}],4:[function(require,module,exports){
+},{"jquery":16}],6:[function(require,module,exports){
 //     Backbone.js 1.1.2
 
 //     (c) 2010-2014 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
@@ -1791,7 +2647,7 @@ module.exports = function PageSlider(container) {
 
 }));
 
-},{"underscore":5}],5:[function(require,module,exports){
+},{"underscore":7}],7:[function(require,module,exports){
 //     Underscore.js 1.6.0
 //     http://underscorejs.org
 //     (c) 2009-2014 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
@@ -3136,7 +3992,7 @@ module.exports = function PageSlider(container) {
   }
 }).call(this);
 
-},{}],6:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 "use strict";
 /*globals Handlebars: true */
 var base = require("./handlebars/base");
@@ -3169,7 +4025,7 @@ var Handlebars = create();
 Handlebars.create = create;
 
 exports["default"] = Handlebars;
-},{"./handlebars/base":7,"./handlebars/exception":8,"./handlebars/runtime":9,"./handlebars/safe-string":10,"./handlebars/utils":11}],7:[function(require,module,exports){
+},{"./handlebars/base":9,"./handlebars/exception":10,"./handlebars/runtime":11,"./handlebars/safe-string":12,"./handlebars/utils":13}],9:[function(require,module,exports){
 "use strict";
 var Utils = require("./utils");
 var Exception = require("./exception")["default"];
@@ -3350,7 +4206,7 @@ exports.log = log;var createFrame = function(object) {
   return obj;
 };
 exports.createFrame = createFrame;
-},{"./exception":8,"./utils":11}],8:[function(require,module,exports){
+},{"./exception":10,"./utils":13}],10:[function(require,module,exports){
 "use strict";
 
 var errorProps = ['description', 'fileName', 'lineNumber', 'message', 'name', 'number', 'stack'];
@@ -3379,7 +4235,7 @@ function Exception(message, node) {
 Exception.prototype = new Error();
 
 exports["default"] = Exception;
-},{}],9:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 "use strict";
 var Utils = require("./utils");
 var Exception = require("./exception")["default"];
@@ -3517,7 +4373,7 @@ exports.program = program;function invokePartial(partial, name, context, helpers
 exports.invokePartial = invokePartial;function noop() { return ""; }
 
 exports.noop = noop;
-},{"./base":7,"./exception":8,"./utils":11}],10:[function(require,module,exports){
+},{"./base":9,"./exception":10,"./utils":13}],12:[function(require,module,exports){
 "use strict";
 // Build out our basic SafeString type
 function SafeString(string) {
@@ -3529,7 +4385,7 @@ SafeString.prototype.toString = function() {
 };
 
 exports["default"] = SafeString;
-},{}],11:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 "use strict";
 /*jshint -W004 */
 var SafeString = require("./safe-string")["default"];
@@ -3606,15 +4462,15 @@ exports.escapeExpression = escapeExpression;function isEmpty(value) {
 }
 
 exports.isEmpty = isEmpty;
-},{"./safe-string":10}],12:[function(require,module,exports){
+},{"./safe-string":12}],14:[function(require,module,exports){
 // Create a simple path alias to allow browserify to resolve
 // the runtime on a supported path.
 module.exports = require('./dist/cjs/handlebars.runtime');
 
-},{"./dist/cjs/handlebars.runtime":6}],13:[function(require,module,exports){
+},{"./dist/cjs/handlebars.runtime":8}],15:[function(require,module,exports){
 module.exports = require("handlebars/runtime")["default"];
 
-},{"handlebars/runtime":12}],14:[function(require,module,exports){
+},{"handlebars/runtime":14}],16:[function(require,module,exports){
 /*!
  * jQuery JavaScript Library v2.1.0
  * http://jquery.com/
@@ -12727,9 +13583,9 @@ return jQuery;
 
 }));
 
-},{}],15:[function(require,module,exports){
-module.exports=require(5)
-},{}],16:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
+module.exports=require(7)
+},{}],18:[function(require,module,exports){
 "use strict";
 
 var Backbone = require('backbone');
@@ -12738,48 +13594,112 @@ var PageSlider = require('./modules/pageslider');
 var HomeView = require('./views/Home');
 var ScheduleView = require('./views/Schedule');
 var LocationView = require('./views/Location');
+var AppointmentView = require('./views/Appointment');
+var ProgressView = require('./views/Progress');
+var CompleteView = require('./views/Complete');
+var ConfirmView = require('./views/Confirm');
+var ResetView = require('./views/Reset');
+var AlertView = require('./views/Alert');
+var models = require('./models/memory/appointment');
 Backbone.$ = $;
 
 var slider = new PageSlider($('body'));
-var homeView = new HomeView();
+// var page = new $('body');
+var appointmentList = new models.AppointmentCollection();
 
 module.exports = Backbone.Router.extend({
     
     routes: {
         "": "home",
         "schedule": "schedule",
-        "location": "location"        
+        "location": "location",
+        "appointment/:id": "appointment",
+        "appointment/:id/progress": "progress",
+        "appointment/:id/complete": "complete",
+        "appointment/:id/confirm": "confirm",
+        "appointment/:id/reset": "reset",
+        "appointment/:id/alert": "alert"
     },
 
     home: function() {
-        slider.slidePage(homeView.$el);
+        console.log("home");
+        slider.slidePage(new HomeView().$el);
     },
 
     schedule: function() {
-        slider.slidePage(new ScheduleView().$el);
+        console.log("schedule");
+        slider.slidePage(new ScheduleView({collection: appointmentList}).$el);
     },
 
     location: function() {
-        slider.slidePage(new LocationView().$el);
+        console.log("location");
+        slider.slidePage(new LocationView({collection: appointmentList}).$el);
+    },
+
+    appointment: function(id) {
+        console.log("appointment");
+        var appointment = appointmentList.get(id);
+        slider.slidePage(new AppointmentView({model: appointment}).$el);
+    },
+
+    progress: function(id) {
+        console.log("progress");
+        var appointment = appointmentList.get(id);
+        slider.slidePage(new ProgressView({model: appointment}).$el);
+    },
+
+    complete: function(id) {
+        console.log("complete");
+        var appointment = appointmentList.get(id);
+        slider.slidePage(new CompleteView({model: appointment}).$el);
+    },
+
+    confirm: function(id) {
+        console.log("confirm");
+        var appointment = appointmentList.get(id);
+        slider.slidePage(new ConfirmView({model: appointment}).$el);
+    },
+
+    reset: function(id) {
+        console.log("reset");
+        var appointment = appointmentList.get(id);
+        slider.slidePage(new ResetView({model: appointment}).$el);
+    },
+
+    alert: function(id) {
+        console.log("alert");
+        var appointment = appointmentList.get(id);
+        slider.slidePage(new AlertView({model: appointment}).$el);
     }
 
 });
-},{"./modules/pageslider":3,"./views/Home":22,"./views/Location":23,"./views/Schedule":24,"backbone":4,"jquery":14}],17:[function(require,module,exports){
+},{"./models/memory/appointment":2,"./modules/pageslider":5,"./views/Alert":32,"./views/Appointment":33,"./views/Complete":35,"./views/Confirm":37,"./views/Home":38,"./views/Location":39,"./views/Progress":40,"./views/Reset":42,"./views/Schedule":43,"backbone":6,"jquery":16}],19:[function(require,module,exports){
 // hbsfy compiled Handlebars template
 var Handlebars = require('hbsfy/runtime');
 module.exports = Handlebars.template(function (Handlebars,depth0,helpers,partials,data) {
   this.compilerInfo = [4,'>= 1.0.0'];
 helpers = this.merge(helpers, Handlebars.helpers); data = data || {};
-  var buffer = "", stack1, functionType="function", escapeExpression=this.escapeExpression, self=this;
+  var buffer = "", stack1, helper, functionType="function", escapeExpression=this.escapeExpression;
 
-function program1(depth0,data) {
-  
-  var buffer = "", stack1, helper;
-  buffer += "\n    <li>\n        <a href=\"#appointment/";
+
+  buffer += "<div class=\"navbar navbar-inverse\">\n    <div class=\"container\">\n        <div class=\"row\">\n            <div class=\"col-xs-12 text-center\"><h4 class=\"navbar-text\">Alert</h4></div>\n        </div>\n    </div>\n</div>\n<div class=\"container\">\n    <div class=\"row\">\n        <div class=\"col-xs-12 text-center\">\n            <div class=\"alert alert-danger\"><strong>Warning!</strong> Lone worker alert mode.</div>\n        </div>\n    </div>\n</div>\n<div class=\"navbar navbar-fixed-bottom\">\n    <div class=\"container\">\n        <a id=\"back-button\" class=\"btn btn-danger btn-lg btn-block navbar-btn\" href=\"#appointment/";
   if (helper = helpers.id) { stack1 = helper.call(depth0, {hash:{},data:data}); }
   else { helper = (depth0 && depth0.id); stack1 = typeof helper === functionType ? helper.call(depth0, {hash:{},data:data}) : helper; }
   buffer += escapeExpression(stack1)
-    + "\">\n            <p>";
+    + "/confirm\"><span class=\"glyphicon glyphicon-remove\"> CANCEL</span></a>\n    </div>\n</div>\n";
+  return buffer;
+  });
+
+},{"hbsfy/runtime":15}],20:[function(require,module,exports){
+// hbsfy compiled Handlebars template
+var Handlebars = require('hbsfy/runtime');
+module.exports = Handlebars.template(function (Handlebars,depth0,helpers,partials,data) {
+  this.compilerInfo = [4,'>= 1.0.0'];
+helpers = this.merge(helpers, Handlebars.helpers); data = data || {};
+  var buffer = "", stack1, helper, functionType="function", escapeExpression=this.escapeExpression;
+
+
+  buffer += "<div class=\"navbar navbar-inverse\">\n    <div class=\"container\">\n        <div class=\"row\">\n            <div class=\"col-xs-4\"><a id=\"back-button\" class=\"btn btn-default navbar-btn\" href=\"#\"><span class=\"glyphicon glyphicon-chevron-left\"></span></a></div>\n            <div class=\"col-xs-4 text-center\"><h4 class=\"navbar-text\">Appointment</h4></div>\n        </div>\n    </div>\n</div>\n<div class=\"container\">\n    <div class=\"row\">\n        <div class=\"col-xs-12 text-center\">\n            <div class=\"panel panel-default\">\n                <div class=\"panel-heading\">\n                    <h4>";
   if (helper = helpers.firstName) { stack1 = helper.call(depth0, {hash:{},data:data}); }
   else { helper = (depth0 && depth0.firstName); stack1 = typeof helper === functionType ? helper.call(depth0, {hash:{},data:data}) : helper; }
   buffer += escapeExpression(stack1)
@@ -12787,18 +13707,158 @@ function program1(depth0,data) {
   if (helper = helpers.lastName) { stack1 = helper.call(depth0, {hash:{},data:data}); }
   else { helper = (depth0 && depth0.lastName); stack1 = typeof helper === functionType ? helper.call(depth0, {hash:{},data:data}) : helper; }
   buffer += escapeExpression(stack1)
-    + "</p>\n        </a>\n    </li>\n";
+    + "</h4>\n                </div>\n                <div class=\"panel-body\">\n                    <address>\n                    <strong>";
+  if (helper = helpers.address) { stack1 = helper.call(depth0, {hash:{},data:data}); }
+  else { helper = (depth0 && depth0.address); stack1 = typeof helper === functionType ? helper.call(depth0, {hash:{},data:data}) : helper; }
+  buffer += escapeExpression(stack1)
+    + "</strong><br>\n                    ";
+  if (helper = helpers.city) { stack1 = helper.call(depth0, {hash:{},data:data}); }
+  else { helper = (depth0 && depth0.city); stack1 = typeof helper === functionType ? helper.call(depth0, {hash:{},data:data}) : helper; }
+  buffer += escapeExpression(stack1)
+    + "<br>\n                    ";
+  if (helper = helpers.county) { stack1 = helper.call(depth0, {hash:{},data:data}); }
+  else { helper = (depth0 && depth0.county); stack1 = typeof helper === functionType ? helper.call(depth0, {hash:{},data:data}) : helper; }
+  buffer += escapeExpression(stack1)
+    + "<br>\n                    ";
+  if (helper = helpers.postCode) { stack1 = helper.call(depth0, {hash:{},data:data}); }
+  else { helper = (depth0 && depth0.postCode); stack1 = typeof helper === functionType ? helper.call(depth0, {hash:{},data:data}) : helper; }
+  buffer += escapeExpression(stack1)
+    + "\n                    </address>\n                    <hr>\n                    <p class=\"glyphicon glyphicon-time\"> ";
+  if (helper = helpers.time) { stack1 = helper.call(depth0, {hash:{},data:data}); }
+  else { helper = (depth0 && depth0.time); stack1 = typeof helper === functionType ? helper.call(depth0, {hash:{},data:data}) : helper; }
+  buffer += escapeExpression(stack1)
+    + " / ";
+  if (helper = helpers.duration) { stack1 = helper.call(depth0, {hash:{},data:data}); }
+  else { helper = (depth0 && depth0.duration); stack1 = typeof helper === functionType ? helper.call(depth0, {hash:{},data:data}) : helper; }
+  buffer += escapeExpression(stack1)
+    + "mins</p>\n                </div>\n            </div>            \n        </div>\n    </div>\n</div>\n<div class=\"navbar navbar-fixed-bottom\">\n    <div class=\"container\">\n        <a class=\"btn btn-primary btn-lg btn-block navbar-btn\" href=\"#appointment/";
+  if (helper = helpers.id) { stack1 = helper.call(depth0, {hash:{},data:data}); }
+  else { helper = (depth0 && depth0.id); stack1 = typeof helper === functionType ? helper.call(depth0, {hash:{},data:data}) : helper; }
+  buffer += escapeExpression(stack1)
+    + "/progress\"><span class=\"glyphicon glyphicon-play\"> START</span></a>\n    </div>\n</div>\n";
+  return buffer;
+  });
+
+},{"hbsfy/runtime":15}],21:[function(require,module,exports){
+// hbsfy compiled Handlebars template
+var Handlebars = require('hbsfy/runtime');
+module.exports = Handlebars.template(function (Handlebars,depth0,helpers,partials,data) {
+  this.compilerInfo = [4,'>= 1.0.0'];
+helpers = this.merge(helpers, Handlebars.helpers); data = data || {};
+  var stack1, functionType="function", escapeExpression=this.escapeExpression, self=this;
+
+function program1(depth0,data) {
+  
+  var buffer = "", stack1, helper;
+  buffer += "\n    <a href=\"#appointment/";
+  if (helper = helpers.id) { stack1 = helper.call(depth0, {hash:{},data:data}); }
+  else { helper = (depth0 && depth0.id); stack1 = typeof helper === functionType ? helper.call(depth0, {hash:{},data:data}) : helper; }
+  buffer += escapeExpression(stack1)
+    + "\" class=\"list-group-item\">\n        <h5 class=\"list-group-item-heading\">";
+  if (helper = helpers.firstName) { stack1 = helper.call(depth0, {hash:{},data:data}); }
+  else { helper = (depth0 && depth0.firstName); stack1 = typeof helper === functionType ? helper.call(depth0, {hash:{},data:data}) : helper; }
+  buffer += escapeExpression(stack1)
+    + " ";
+  if (helper = helpers.lastName) { stack1 = helper.call(depth0, {hash:{},data:data}); }
+  else { helper = (depth0 && depth0.lastName); stack1 = typeof helper === functionType ? helper.call(depth0, {hash:{},data:data}) : helper; }
+  buffer += escapeExpression(stack1)
+    + "</h5>\n        <p class=\"list-group-item-text glyphicon glyphicon-time\"> ";
+  if (helper = helpers.time) { stack1 = helper.call(depth0, {hash:{},data:data}); }
+  else { helper = (depth0 && depth0.time); stack1 = typeof helper === functionType ? helper.call(depth0, {hash:{},data:data}) : helper; }
+  buffer += escapeExpression(stack1)
+    + " / ";
+  if (helper = helpers.duration) { stack1 = helper.call(depth0, {hash:{},data:data}); }
+  else { helper = (depth0 && depth0.duration); stack1 = typeof helper === functionType ? helper.call(depth0, {hash:{},data:data}) : helper; }
+  buffer += escapeExpression(stack1)
+    + "mins</p>\n    </a>\n";
   return buffer;
   }
 
-  buffer += "<ul>\n";
   stack1 = helpers.each.call(depth0, depth0, {hash:{},inverse:self.noop,fn:self.program(1, program1, data),data:data});
-  if(stack1 || stack1 === 0) { buffer += stack1; }
-  buffer += "\n</ul>";
+  if(stack1 || stack1 === 0) { return stack1; }
+  else { return ''; }
+  });
+
+},{"hbsfy/runtime":15}],22:[function(require,module,exports){
+// hbsfy compiled Handlebars template
+var Handlebars = require('hbsfy/runtime');
+module.exports = Handlebars.template(function (Handlebars,depth0,helpers,partials,data) {
+  this.compilerInfo = [4,'>= 1.0.0'];
+helpers = this.merge(helpers, Handlebars.helpers); data = data || {};
+  var buffer = "", stack1, helper, functionType="function", escapeExpression=this.escapeExpression;
+
+
+  buffer += "<div class=\"navbar navbar-inverse\">\n    <div class=\"container\">\n        <div class=\"row\">\n            <div class=\"col-xs-12 text-center\"><h4 class=\"navbar-text\">Appointment</h4></div>\n        </div>\n    </div>\n</div>\n<div class=\"container\">\n    <div class=\"row\">\n        <div class=\"col-xs-12 text-center\"><div id=\"progress\"></div></div>\n    </div>\n    <div class=\"row\">\n        <div class=\"col-xs-12\"><p class=\"text-center\">Appointment time complete</p></div>\n    </div>\n</div>\n<div class=\"navbar navbar-fixed-bottom\">\n    <div class=\"container\">\n        <div class=\"btn-group btn-group-lg btn-group-justified\">\n            <a class=\"btn btn-danger btn-lg btn-block navbar-btn\" href=\"#appointment/";
+  if (helper = helpers.id) { stack1 = helper.call(depth0, {hash:{},data:data}); }
+  else { helper = (depth0 && depth0.id); stack1 = typeof helper === functionType ? helper.call(depth0, {hash:{},data:data}) : helper; }
+  buffer += escapeExpression(stack1)
+    + "/confirm\"><span class=\"glyphicon glyphicon-remove\"> FINISH</span></a>\n            <a class=\"btn btn-danger btn-lg btn-block navbar-btn\" href=\"#appointment/";
+  if (helper = helpers.id) { stack1 = helper.call(depth0, {hash:{},data:data}); }
+  else { helper = (depth0 && depth0.id); stack1 = typeof helper === functionType ? helper.call(depth0, {hash:{},data:data}) : helper; }
+  buffer += escapeExpression(stack1)
+    + "/reset\"><span class=\"glyphicon glyphicon-repeat\"> RESET</span></a>            \n        </div>\n    </div>\n</div>";
   return buffer;
   });
 
-},{"hbsfy/runtime":13}],18:[function(require,module,exports){
+},{"hbsfy/runtime":15}],23:[function(require,module,exports){
+// hbsfy compiled Handlebars template
+var Handlebars = require('hbsfy/runtime');
+module.exports = Handlebars.template(function (Handlebars,depth0,helpers,partials,data) {
+  this.compilerInfo = [4,'>= 1.0.0'];
+helpers = this.merge(helpers, Handlebars.helpers); data = data || {};
+  var buffer = "", stack1, helper, functionType="function", escapeExpression=this.escapeExpression, self=this;
+
+function program1(depth0,data) {
+  
+  var buffer = "", stack1, helper;
+  buffer += "\n                        <hr>\n                        <p class=\"glyphicon glyphicon-info-sign\"> ";
+  if (helper = helpers.actual) { stack1 = helper.call(depth0, {hash:{},data:data}); }
+  else { helper = (depth0 && depth0.actual); stack1 = typeof helper === functionType ? helper.call(depth0, {hash:{},data:data}) : helper; }
+  buffer += escapeExpression(stack1)
+    + "mins</p>\n                    ";
+  return buffer;
+  }
+
+  buffer += "<div class=\"navbar navbar-inverse\">\n    <div class=\"container\">\n        <div class=\"row\">\n            <div class=\"col-xs-4\"><a id=\"back-button\" class=\"btn btn-default navbar-btn\" href=\"#\"><span class=\"glyphicon glyphicon-chevron-left\"></span></a></div>\n            <div class=\"col-xs-4 text-center\"><h4 class=\"navbar-text\">Appointment</h4></div>\n        </div>\n    </div>\n</div>\n<div class=\"container\">\n    <div class=\"row\">\n        <div class=\"col-xs-12 text-center\">\n            <div class=\"panel panel-default\">\n                <div class=\"panel-heading\">\n                    <h4>";
+  if (helper = helpers.firstName) { stack1 = helper.call(depth0, {hash:{},data:data}); }
+  else { helper = (depth0 && depth0.firstName); stack1 = typeof helper === functionType ? helper.call(depth0, {hash:{},data:data}) : helper; }
+  buffer += escapeExpression(stack1)
+    + " ";
+  if (helper = helpers.lastName) { stack1 = helper.call(depth0, {hash:{},data:data}); }
+  else { helper = (depth0 && depth0.lastName); stack1 = typeof helper === functionType ? helper.call(depth0, {hash:{},data:data}) : helper; }
+  buffer += escapeExpression(stack1)
+    + "</h4>\n                </div>\n                <div class=\"panel-body\">\n                    <address>\n                    <strong>";
+  if (helper = helpers.address) { stack1 = helper.call(depth0, {hash:{},data:data}); }
+  else { helper = (depth0 && depth0.address); stack1 = typeof helper === functionType ? helper.call(depth0, {hash:{},data:data}) : helper; }
+  buffer += escapeExpression(stack1)
+    + "</strong><br>\n                    ";
+  if (helper = helpers.city) { stack1 = helper.call(depth0, {hash:{},data:data}); }
+  else { helper = (depth0 && depth0.city); stack1 = typeof helper === functionType ? helper.call(depth0, {hash:{},data:data}) : helper; }
+  buffer += escapeExpression(stack1)
+    + "<br>\n                    ";
+  if (helper = helpers.county) { stack1 = helper.call(depth0, {hash:{},data:data}); }
+  else { helper = (depth0 && depth0.county); stack1 = typeof helper === functionType ? helper.call(depth0, {hash:{},data:data}) : helper; }
+  buffer += escapeExpression(stack1)
+    + "<br>\n                    ";
+  if (helper = helpers.postCode) { stack1 = helper.call(depth0, {hash:{},data:data}); }
+  else { helper = (depth0 && depth0.postCode); stack1 = typeof helper === functionType ? helper.call(depth0, {hash:{},data:data}) : helper; }
+  buffer += escapeExpression(stack1)
+    + "\n                    </address>\n                    <hr>\n                    <p class=\"glyphicon glyphicon-time\"> ";
+  if (helper = helpers.time) { stack1 = helper.call(depth0, {hash:{},data:data}); }
+  else { helper = (depth0 && depth0.time); stack1 = typeof helper === functionType ? helper.call(depth0, {hash:{},data:data}) : helper; }
+  buffer += escapeExpression(stack1)
+    + " / ";
+  if (helper = helpers.duration) { stack1 = helper.call(depth0, {hash:{},data:data}); }
+  else { helper = (depth0 && depth0.duration); stack1 = typeof helper === functionType ? helper.call(depth0, {hash:{},data:data}) : helper; }
+  buffer += escapeExpression(stack1)
+    + "mins</p>\n                    ";
+  stack1 = helpers['if'].call(depth0, (depth0 && depth0.actual), {hash:{},inverse:self.noop,fn:self.program(1, program1, data),data:data});
+  if(stack1 || stack1 === 0) { buffer += stack1; }
+  buffer += "\n                </div>\n            </div>            \n        </div>\n    </div>\n</div>\n<div class=\"navbar navbar-fixed-bottom\">\n    <div class=\"container\">\n        <a id=\"home\" class=\"btn btn-primary btn-lg btn-block navbar-btn\" href=\"/\"><span class=\"glyphicon glyphicon-ok\"> Confirm</span></a>\n    </div>\n</div>\n";
+  return buffer;
+  });
+
+},{"hbsfy/runtime":15}],24:[function(require,module,exports){
 // hbsfy compiled Handlebars template
 var Handlebars = require('hbsfy/runtime');
 module.exports = Handlebars.template(function (Handlebars,depth0,helpers,partials,data) {
@@ -12807,10 +13867,10 @@ helpers = this.merge(helpers, Handlebars.helpers); data = data || {};
   
 
 
-  return "<a href=\"#schedule\">Schedule</a>\n<a href=\"#location\">Location</a>";
+  return "<div class=\"navbar navbar-inverse\">\n    <div class=\"container\">\n        <div class=\"row\">\n            <div class=\"col-xs-12 text-center\"><h4 class=\"navbar-text\">Home</h4></div>\n        </div>\n    </div>\n</div>\n<div>\n    <a class=\"btn btn-primary btn-lg btn-block\" href=\"#schedule\"><span class=\"glyphicon glyphicon-calendar\"> Schedule</span></a>\n    <a class=\"btn btn-primary btn-lg btn-block\" href=\"#location\"><span class=\"glyphicon glyphicon-map-marker\"> Location</span></a>\n</div>";
   });
 
-},{"hbsfy/runtime":13}],19:[function(require,module,exports){
+},{"hbsfy/runtime":15}],25:[function(require,module,exports){
 // hbsfy compiled Handlebars template
 var Handlebars = require('hbsfy/runtime');
 module.exports = Handlebars.template(function (Handlebars,depth0,helpers,partials,data) {
@@ -12819,10 +13879,65 @@ helpers = this.merge(helpers, Handlebars.helpers); data = data || {};
   
 
 
-  return "<a class=\"back-button\" href=\"#\">Back</a>\n<h1>Location</h1>\n<div class=\"scroller\">\n    <p>Getting location</p>\n</div>";
+  return "<div class=\"navbar navbar-inverse\">\n    <div class=\"container\">\n        <div class=\"row\">\n            <div class=\"col-xs-4 text-left\"><a id=\"back-button\" class=\"btn btn-default navbar-btn\" href=\"#\"><span class=\"glyphicon glyphicon-chevron-left\"></span></a></div>\n            <div class=\"col-xs-4 text-center\"><h4 class=\"navbar-text\">Location</h4></div>\n            <div class=\"col-xs-4 text-right\"><a id=\"refresh\" class=\"btn btn-default navbar-btn\" href=\"#\"><span class=\"glyphicon glyphicon-refresh\"></span></a></div>\n        </div>\n    </div>\n</div>\n<div class=\"scroller list-group\">\n    <p>Getting location</p>\n</div>";
   });
 
-},{"hbsfy/runtime":13}],20:[function(require,module,exports){
+},{"hbsfy/runtime":15}],26:[function(require,module,exports){
+// hbsfy compiled Handlebars template
+var Handlebars = require('hbsfy/runtime');
+module.exports = Handlebars.template(function (Handlebars,depth0,helpers,partials,data) {
+  this.compilerInfo = [4,'>= 1.0.0'];
+helpers = this.merge(helpers, Handlebars.helpers); data = data || {};
+  var buffer = "", stack1, helper, functionType="function", escapeExpression=this.escapeExpression;
+
+
+  buffer += "<div class=\"navbar navbar-inverse\">\n    <div class=\"container\">\n        <div class=\"row\">\n            <div class=\"col-xs-12 text-center\"><h4 class=\"navbar-text\">Appointment</h4></div>\n        </div>\n    </div>\n</div>\n<div class=\"container\">\n    <div class=\"row\">\n        <div class=\"col-xs-12 text-center\"><div id=\"progress\"></div></div>\n    </div>\n    <div class=\"row\">\n        <div class=\"col-xs-12\"><p class=\"text-center\">Appointment time remaining</p></div>\n    </div>\n</div>\n<div class=\"navbar navbar-fixed-bottom\">\n    <div class=\"container\">\n        <div class=\"btn-group btn-group-lg btn-group-justified\">\n            <a id=\"alert\" class=\"btn btn-primary btn-lg btn-block navbar-btn\" href=\"#appointment/";
+  if (helper = helpers.id) { stack1 = helper.call(depth0, {hash:{},data:data}); }
+  else { helper = (depth0 && depth0.id); stack1 = typeof helper === functionType ? helper.call(depth0, {hash:{},data:data}) : helper; }
+  buffer += escapeExpression(stack1)
+    + "/alert\"><span class=\"glyphicon glyphicon-bell\"> ALERT</span></a>\n            <a id=\"finish\" class=\"btn btn-primary btn-lg btn-block navbar-btn\" href=\"#appointment/";
+  if (helper = helpers.id) { stack1 = helper.call(depth0, {hash:{},data:data}); }
+  else { helper = (depth0 && depth0.id); stack1 = typeof helper === functionType ? helper.call(depth0, {hash:{},data:data}) : helper; }
+  buffer += escapeExpression(stack1)
+    + "/confirm\"><span class=\"glyphicon glyphicon-remove\"> FINISH</span></a>            \n        </div>\n    </div>\n</div>";
+  return buffer;
+  });
+
+},{"hbsfy/runtime":15}],27:[function(require,module,exports){
+// hbsfy compiled Handlebars template
+var Handlebars = require('hbsfy/runtime');
+module.exports = Handlebars.template(function (Handlebars,depth0,helpers,partials,data) {
+  this.compilerInfo = [4,'>= 1.0.0'];
+helpers = this.merge(helpers, Handlebars.helpers); data = data || {};
+  var buffer = "", stack1, helper, functionType="function", escapeExpression=this.escapeExpression;
+
+
+  buffer += "<input type=\"text\" class=\"timer\" value=\"";
+  if (helper = helpers.initialTime) { stack1 = helper.call(depth0, {hash:{},data:data}); }
+  else { helper = (depth0 && depth0.initialTime); stack1 = typeof helper === functionType ? helper.call(depth0, {hash:{},data:data}) : helper; }
+  buffer += escapeExpression(stack1)
+    + "\">";
+  return buffer;
+  });
+
+},{"hbsfy/runtime":15}],28:[function(require,module,exports){
+// hbsfy compiled Handlebars template
+var Handlebars = require('hbsfy/runtime');
+module.exports = Handlebars.template(function (Handlebars,depth0,helpers,partials,data) {
+  this.compilerInfo = [4,'>= 1.0.0'];
+helpers = this.merge(helpers, Handlebars.helpers); data = data || {};
+  var buffer = "", stack1, helper, functionType="function", escapeExpression=this.escapeExpression;
+
+
+  buffer += "<div class=\"navbar navbar-inverse\">\n    <div class=\"container\">\n        <div class=\"row\">\n            <div class=\"col-xs-4\"><a id=\"back-button\" class=\"btn btn-default navbar-btn\" href=\"#\"><span class=\"glyphicon glyphicon-chevron-left\"></span></a></div>\n            <div class=\"col-xs-4 text-center\"><h4 class=\"navbar-text\">Appointment</h4></div>\n        </div>\n    </div>\n</div>\n<div class=\"container\">\n    <div class=\"row\">\n        <div class=\"col-xs-12 text-center\"><div id=\"additional\"></div></div>\n    </div>\n    <div class=\"row\">\n        <div class=\"col-xs-12\"><p class=\"text-center\">Increase the appointment duration</p></div>\n    </div>\n</div>\n<div class=\"navbar navbar-fixed-bottom\">\n    <div class=\"container\">\n        <a id=\"start\" class=\"btn btn-primary btn-lg btn-block navbar-btn\" href=\"#appointment/";
+  if (helper = helpers.id) { stack1 = helper.call(depth0, {hash:{},data:data}); }
+  else { helper = (depth0 && depth0.id); stack1 = typeof helper === functionType ? helper.call(depth0, {hash:{},data:data}) : helper; }
+  buffer += escapeExpression(stack1)
+    + "/progress\"><span class=\"glyphicon glyphicon-play\"> START</span></a>\n    </div>\n</div>\n";
+  return buffer;
+  });
+
+},{"hbsfy/runtime":15}],29:[function(require,module,exports){
 // hbsfy compiled Handlebars template
 var Handlebars = require('hbsfy/runtime');
 module.exports = Handlebars.template(function (Handlebars,depth0,helpers,partials,data) {
@@ -12831,10 +13946,78 @@ helpers = this.merge(helpers, Handlebars.helpers); data = data || {};
   
 
 
-  return "<a class=\"back-button\" href=\"#\">Back</a>\n<h1>Schedule</h1>\n<div class=\"scroller\"></div>";
+  return "<div class=\"navbar navbar-inverse\">\n    <div class=\"container\">\n        <div class=\"row\">\n            <div class=\"col-xs-4\"><a id=\"back-button\" class=\"btn btn-default navbar-btn\" href=\"#\"><span class=\"glyphicon glyphicon-chevron-left\"></span></a></div>\n            <div class=\"col-xs-4 text-center\"><h4 class=\"navbar-text\">Schedule</h4></div>\n        </div>\n    </div>\n</div>\n<div class=\"scroller list-group\"></div>\n";
   });
 
-},{"hbsfy/runtime":13}],21:[function(require,module,exports){
+},{"hbsfy/runtime":15}],30:[function(require,module,exports){
+// hbsfy compiled Handlebars template
+var Handlebars = require('hbsfy/runtime');
+module.exports = Handlebars.template(function (Handlebars,depth0,helpers,partials,data) {
+  this.compilerInfo = [4,'>= 1.0.0'];
+helpers = this.merge(helpers, Handlebars.helpers); data = data || {};
+  var buffer = "", stack1, helper, functionType="function", escapeExpression=this.escapeExpression;
+
+
+  buffer += "<input type=\"text\" class=\"dial\" value=\"";
+  if (helper = helpers.initialTime) { stack1 = helper.call(depth0, {hash:{},data:data}); }
+  else { helper = (depth0 && depth0.initialTime); stack1 = typeof helper === functionType ? helper.call(depth0, {hash:{},data:data}) : helper; }
+  buffer += escapeExpression(stack1)
+    + "\">";
+  return buffer;
+  });
+
+},{"hbsfy/runtime":15}],31:[function(require,module,exports){
+"use strict";
+
+var Backbone = require('backbone');
+var _ = require('underscore');
+var $ = require('jquery');
+Backbone.$ = $;
+
+module.exports = _.extend({}, Backbone.Events);
+},{"backbone":6,"jquery":16,"underscore":17}],32:[function(require,module,exports){
+"use strict";
+
+var Backbone = require('backbone');
+var $ = require('jquery');
+var template = require("../templates/Alert.hbs");
+Backbone.$ = $;
+
+module.exports = Backbone.View.extend({
+
+    initialize: function(options) {
+        this.render();
+    },
+
+    render: function() {
+        this.$el.html(template(this.model.attributes));
+        return this;
+    },
+
+});
+
+},{"../templates/Alert.hbs":19,"backbone":6,"jquery":16}],33:[function(require,module,exports){
+"use strict";
+
+var Backbone = require('backbone');
+var $ = require('jquery');
+var template = require("../templates/Appointment.hbs");
+Backbone.$ = $;
+
+module.exports = Backbone.View.extend({
+
+    initialize: function () {
+        this.render();
+    },
+
+    render: function () {
+        this.$el.html(template(this.model.attributes));
+        return this;
+    }
+
+});
+
+},{"../templates/Appointment.hbs":20,"backbone":6,"jquery":16}],34:[function(require,module,exports){
 "use strict";
 
 var Backbone = require('backbone');
@@ -12845,8 +14028,9 @@ Backbone.$ = $;
 module.exports = Backbone.View.extend({
 
     initialize: function () {
-        this.render();
+        // this.render();
         this.collection.on("reset", this.render, this);
+        this.collection.on("filtered", this.render, this);
     },
 
     render: function () {
@@ -12857,7 +14041,106 @@ module.exports = Backbone.View.extend({
     }
 
 });
-},{"../templates/AppointmentList.hbs":17,"backbone":4,"jquery":14}],22:[function(require,module,exports){
+},{"../templates/AppointmentList.hbs":21,"backbone":6,"jquery":16}],35:[function(require,module,exports){
+"use strict";
+
+var Backbone = require('backbone');
+var $ = require('jquery');
+var CompleteTimerView = require('../views/CompleteTimer');
+var template = require("../templates/Complete.hbs");
+Backbone.$ = $;
+
+module.exports = Backbone.View.extend({
+
+    initialize: function(options) {
+        this.router = options.router;
+        this.render();
+        if (navigator.vibrate) {
+            console.log("vibrate");
+            navigator.vibrate(2000);
+        }
+        if (navigator.beep) {
+            console.log("beep");
+            navigator.beep(2);
+        }
+    },
+
+    render: function() {
+        this.$el.html(template(this.model.attributes));
+        var duration = 0;
+        if (this.model.get("additional") > 0) {
+            duration = this.model.get("additional");
+        } else {
+            duration = this.model.get("duration");
+        }
+        this.timerView = new CompleteTimerView({el: $("#progress", this.el), model: this.model, duration: duration});
+        return this;
+    }
+
+});
+
+},{"../templates/Complete.hbs":22,"../views/CompleteTimer":36,"backbone":6,"jquery":16}],36:[function(require,module,exports){
+"use strict";
+
+var Backbone = require('backbone');
+var $ = require('jquery');
+var Knob = require('../modules/jquery.knob');
+var template = require("../templates/ProgressTimer.hbs");
+Backbone.$ = $;
+
+var knob = new Knob($);
+
+module.exports = Backbone.View.extend({
+
+    initialize: function(options) {
+        this.duration = options.duration;
+        this.render();
+        this.$(".timer").knob({
+            'max': this.duration,
+            'width': 240,
+            'height': 240,
+            'readOnly': true,
+            'fgColor': '#d9534f'
+        });
+    },
+
+    render: function() {
+        this.$el.html(template({initialTime: this.duration}));
+        return this;
+    }
+
+});
+},{"../modules/jquery.knob":4,"../templates/ProgressTimer.hbs":27,"backbone":6,"jquery":16}],37:[function(require,module,exports){
+"use strict";
+
+var Backbone = require('backbone');
+var $ = require('jquery');
+var template = require("../templates/Confirm.hbs");
+Backbone.$ = $;
+
+module.exports = Backbone.View.extend({
+
+    events: {
+        "click #home": "onConfirm"
+    },
+
+    initialize: function () {
+        this.render();
+    },
+
+    render: function () {
+        this.$el.html(template(this.model.attributes));
+        return this;
+    },
+
+    onConfirm: function() {
+        this.model.set({status: "complete"});
+        this.model.save();
+    }
+
+});
+
+},{"../templates/Confirm.hbs":23,"backbone":6,"jquery":16}],38:[function(require,module,exports){
 "use strict";
 
 var Backbone = require('backbone');
@@ -12878,51 +14161,256 @@ module.exports = Backbone.View.extend({
     }
 
 });
-},{"../templates/Home.hbs":18,"backbone":4,"jquery":14}],23:[function(require,module,exports){
+},{"../templates/Home.hbs":24,"backbone":6,"jquery":16}],39:[function(require,module,exports){
 "use strict";
 
 var Backbone = require('backbone');
 var _ = require('underscore');
 var $ = require('jquery');
 var AppointmentListView = require('../views/AppointmentList');
-var models = require('../models/memory/appointment');
 var template = require("../templates/Location.hbs");
 Backbone.$ = $;
 
 module.exports = Backbone.View.extend({
 
-    initialize: function () {
-        _.bindAll(this, 'locationSuccess', 'locationError');
-        console.log("location initialize");
-        this.appointmentList = new models.FilteredAppointmentCollection();
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(this.locationSuccess, this.locationError);
-        }
-        this.render();
+    events: {
+        "click #refresh": "onRefresh"
     },
 
-    render: function () {
+    initialize: function() {
+        console.log("location initialize");
+        _.bindAll(this, 'locationSuccess', 'locationError');
+        this.collection.on("reset", this.filterAppointments, this);
+        this.deviation = 0.02;
+        this.render();
+        this.getLocation();
+    },
+
+    render: function() {
         this.$el.html(template());
-        this.listView = new AppointmentListView({collection: this.appointmentList, el: $(".scroller", this.el)});
         return this;
     },
 
+    getLocation: function() {
+        if (navigator.geolocation) {
+            console.log("geolocation active");
+            navigator.geolocation.getCurrentPosition(this.locationSuccess, this.locationError);
+        }
+    },
+
     locationSuccess: function(position) {
-        this.appointmentList.fetch({reset: true, data: {latitude: position.coords.latitude, longitude: position.coords.longitude, deviation: 0.02}}); // 0.02 is the allowed deviation for the search location.
+        this.searchLatitude = position.coords.latitude;
+        this.searchLongitude = position.coords.longitude;
+        this.collection.fetch({reset: true});
     },
 
     locationError: function(error) {
         console.log(error.messaga);
+    },
+
+    filterAppointments: function(collection) {
+        var filtereredCollection = collection.byPosition(this.searchLatitude, this.searchLongitude, this.deviation);
+        this.listView = new AppointmentListView({collection: filtereredCollection, el: $(".scroller", this.el)});
+        filtereredCollection.trigger("filtered");
+    },
+
+    onRefresh: function() {
+        event.preventDefault();
+        this.getLocation();
     }
 
 });
-},{"../models/memory/appointment":2,"../templates/Location.hbs":19,"../views/AppointmentList":21,"backbone":4,"jquery":14,"underscore":15}],24:[function(require,module,exports){
+},{"../templates/Location.hbs":25,"../views/AppointmentList":34,"backbone":6,"jquery":16,"underscore":17}],40:[function(require,module,exports){
+"use strict";
+
+var Backbone = require('backbone');
+var _ = require('underscore');
+var $ = require('jquery');
+var Vent = require('../utils/Vent');
+var Shake = require('../modules/Shake');
+var ProgressTimerView = require('../views/ProgressTimer');
+var template = require("../templates/Progress.hbs");
+Backbone.$ = $;
+
+module.exports = Backbone.View.extend({
+
+    events: {
+        "click #home": "cancelProgress",
+        "click #finish": "cancelProgress",
+        "click #alert": "cancelProgress"
+    },
+
+    initialize: function(options) {
+        _.bindAll(this, 'onShake');
+        Vent.on("Timer:Tick", this.timerTick, this);
+        Vent.on("Timer:Complete", this.timerComplete, this);
+        this.shake = new Shake();
+        this.shake.startWatch(this.onShake);
+        this.render();
+    },
+
+    render: function() {
+        this.$el.html(template(this.model.attributes));
+        var duration = 0;
+        if (this.model.get("additional") > 0) {
+            duration = this.model.get("additional");
+        } else {
+            duration = this.model.get("duration");
+        }
+        this.timerView = new ProgressTimerView({el: $("#progress", this.el), duration: duration, startTime: this.model.get("startTime"), interval: 1000});
+        this.timerView.start();
+        return this;
+    },
+
+    timerTick: function(tick) {
+        var actual = this.model.get("actual");
+        this.model.set({actual: actual+1});
+        this.model.set({startTime: tick});
+    },
+
+    timerComplete: function() {
+        this.cancelProgress();
+        this.model.set({startTime: 0});
+        var router = new Backbone.Router();
+        router.navigate("appointment/"+this.model.get("id")+"/complete", {trigger: true});
+    },
+
+    cancelProgress: function() {
+        this.shake.stopWatch();
+        this.timerView.cancel();
+        Vent.off("Timer:Tick", this.timerTick, this);
+        Vent.off("Timer:Complete", this.timerComplete, this);
+    },
+
+    onShake: function() {
+        this.cancelProgress();
+        var router = new Backbone.Router();
+        router.navigate("appointment/"+this.model.get("id")+"/alert", {trigger: true});
+    }
+
+});
+
+},{"../modules/Shake":3,"../templates/Progress.hbs":26,"../utils/Vent":31,"../views/ProgressTimer":41,"backbone":6,"jquery":16,"underscore":17}],41:[function(require,module,exports){
+"use strict";
+
+var Backbone = require('backbone');
+var _ = require('underscore');
+var $ = require('jquery');
+var Vent = require('../utils/Vent');
+var Knob = require('../modules/jquery.knob');
+var template = require("../templates/ProgressTimer.hbs");
+Backbone.$ = $;
+
+var knob = new Knob($);
+
+module.exports = Backbone.View.extend({
+
+    initialize: function(options) {
+        _.bindAll(this, 'update');
+        this.duration = options.duration;
+        this.startTime = options.startTime;
+        this.actual = options.actual;
+        this.interval = options.interval;
+        this.count = this.startTime;
+        this.render();
+        this.$timer = this.$(".timer");
+        this.$timer.knob({
+            'max': this.duration,
+            'width': 240,
+            'height': 240,
+            'readOnly': true,
+            'fgColor': '#5bc0de',
+            'inputColor': '#555'
+        });
+    },
+
+    render: function() {
+        this.$el.html(template({initialTime: this.startTime}));
+        return this;
+    },
+
+    start: function() {
+        this.startId = setTimeout(this.update, this.interval);
+    },
+
+    update: function() {
+        this.count++;
+        console.log(this.count);
+        this.$timer.val(this.count).trigger("change");
+        Vent.trigger("Timer:Tick", this.count);
+        if (this.count >= this.duration) {
+            this.completeId = setTimeout(this.onComplete, this.interval);
+        } else {          
+            this.counterId = setTimeout(this.update, this.interval);
+        }
+    },
+
+    onComplete: function() {
+        Vent.trigger("Timer:Complete");
+    },
+
+    cancel: function() {
+        clearTimeout(this.startId);
+        clearTimeout(this.counterId);
+        clearTimeout(this.completeId);
+    }
+
+});
+},{"../modules/jquery.knob":4,"../templates/ProgressTimer.hbs":27,"../utils/Vent":31,"backbone":6,"jquery":16,"underscore":17}],42:[function(require,module,exports){
+"use strict";
+
+var Backbone = require('backbone');
+var $ = require('jquery');
+var Vent = require('../utils/Vent');
+var TimerDialView = require('../views/TimerDial');
+var template = require("../templates/Reset.hbs");
+Backbone.$ = $;
+
+module.exports = Backbone.View.extend({
+
+    events: {
+        "click #start": "onStart",
+        "click #back-button": "onBack"
+    },
+
+    initialize: function(options) {
+        Vent.on("Dial:Release", this.updateAdditional, this);
+        this.additional = 0;
+        this.render();
+    },
+
+    render: function() {
+        this.$el.html(template(this.model.attributes));
+        this.dialView = new TimerDialView({el: $("#additional", this.el), startTime: 0, maxTime: 15});
+        return this;
+    },
+
+    updateAdditional: function(value) {
+        console.log("Update additional time: " + value);
+        this.additional = value;
+    },
+
+    stopListeneing: function() {
+        Vent.off("Dial:Release", this.updateAdditional, this);
+    },
+
+    onStart: function() {
+        this.model.set({additional: this.additional});
+        this.stopListeneing();
+    },
+
+    onBack: function() {
+        this.stopListeneing();
+    }
+
+});
+
+},{"../templates/Reset.hbs":28,"../utils/Vent":31,"../views/TimerDial":44,"backbone":6,"jquery":16}],43:[function(require,module,exports){
 "use strict";
 
 var Backbone = require('backbone');
 var $ = require('jquery');
 var AppointmentListView = require('../views/AppointmentList');
-var models = require('../models/memory/appointment');
 var template = require("../templates/Schedule.hbs");
 Backbone.$ = $;
 
@@ -12930,17 +14418,56 @@ module.exports = Backbone.View.extend({
 
     initialize: function () {
         console.log("schedule initialize");
-        this.appointmentList = new models.AppointmentCollection();
-        console.log(this.appointmentList);
-        this.appointmentList.fetch({reset: true});
         this.render();
+        this.collection.fetch({reset: true});
     },
 
     render: function () {
         this.$el.html(template());
-        this.listView = new AppointmentListView({collection: this.appointmentList, el: $(".scroller", this.el)});
+        this.listView = new AppointmentListView({collection: this.collection, el: $(".scroller", this.el)});
         return this;
     }
 
 });
-},{"../models/memory/appointment":2,"../templates/Schedule.hbs":20,"../views/AppointmentList":21,"backbone":4,"jquery":14}]},{},[1])
+},{"../templates/Schedule.hbs":29,"../views/AppointmentList":34,"backbone":6,"jquery":16}],44:[function(require,module,exports){
+"use strict";
+
+var Backbone = require('backbone');
+var _ = require('underscore');
+var $ = require('jquery');
+var Vent = require('../utils/Vent');
+var Knob = require('../modules/jquery.knob');
+var template = require("../templates/TimerDial.hbs");
+Backbone.$ = $;
+
+var knob = new Knob($);
+
+module.exports = Backbone.View.extend({
+
+    initialize: function(options) {
+        _.bindAll(this, 'onRelease');        
+        this.startTime = options.startTime;
+        this.maxTime = options.maxTime;
+        this.render();
+        this.$(".dial").knob({
+            'max': this.maxTime,
+            'width': 240,
+            'height': 240,
+            'displayPrevious': true,
+            'fgColor': '#428bca',
+            'inputColor': '#555',
+            'release': this.onRelease
+        });
+    },
+
+    render: function() {
+        this.$el.html(template({initialTime: this.startTime}));
+        return this;
+    },
+
+    onRelease: function(value) {
+        Vent.trigger("Dial:Release", value);
+    }
+
+});
+},{"../modules/jquery.knob":4,"../templates/TimerDial.hbs":30,"../utils/Vent":31,"backbone":6,"jquery":16,"underscore":17}]},{},[1])
