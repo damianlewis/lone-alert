@@ -13875,15 +13875,15 @@ helpers = this.merge(helpers, Handlebars.helpers); data = data || {};
   var buffer = "", stack1, helper, functionType="function", escapeExpression=this.escapeExpression;
 
 
-  buffer += "<div class=\"navbar navbar-inverse\">\n    <div class=\"container\">\n        <div class=\"row\">\n            <div class=\"col-xs-12 text-center\"><h4 class=\"navbar-text\">Appointment</h4></div>\n        </div>\n    </div>\n</div>\n<div class=\"container\">\n    <div class=\"row\">\n        <div class=\"col-xs-12 text-center\"><div id=\"progress\"></div></div>\n    </div>\n    <div class=\"row\">\n        <div class=\"col-xs-12\"><p class=\"text-center\">Appointment time remaining</p></div>\n    </div>\n</div>\n<div class=\"navbar navbar-fixed-bottom\">\n    <div class=\"container\">\n        <div class=\"btn-group btn-group-lg btn-group-justified\">\n            <a id=\"alert\" class=\"btn btn-primary btn-lg btn-block navbar-btn\" href=\"#appointment/";
+  buffer += "<div class=\"navbar navbar-inverse\">\n    <div class=\"container\">\n        <div class=\"row\">\n            <div class=\"col-xs-12 text-center\"><h4 class=\"navbar-text\">Appointment</h4></div>\n        </div>\n    </div>\n</div>\n<div class=\"container\">\n    <div class=\"row\">\n        <div class=\"col-xs-12 text-center\"><div id=\"progress\"></div></div>\n    </div>\n    <div class=\"row\">\n        <div class=\"col-xs-12\"><p class=\"text-center\">Appointment time remaining</p></div>\n    </div>\n</div>\n<div class=\"navbar navbar-fixed-bottom\">\n    <div class=\"container\">\n        <div class=\"btn-group btn-group-lg btn-group-justified\">\n            <a id=\"finish\" class=\"btn btn-primary btn-lg btn-block navbar-btn\" href=\"#appointment/";
   if (helper = helpers.id) { stack1 = helper.call(depth0, {hash:{},data:data}); }
   else { helper = (depth0 && depth0.id); stack1 = typeof helper === functionType ? helper.call(depth0, {hash:{},data:data}) : helper; }
   buffer += escapeExpression(stack1)
-    + "/alert\"><span class=\"glyphicon glyphicon-bell\"> ALERT</span></a>\n            <a id=\"finish\" class=\"btn btn-primary btn-lg btn-block navbar-btn\" href=\"#appointment/";
+    + "/confirm\"><span class=\"glyphicon glyphicon-remove\"> FINISH</span></a>            \n            <a id=\"alert\" class=\"btn btn-primary btn-lg btn-block navbar-btn\" href=\"#appointment/";
   if (helper = helpers.id) { stack1 = helper.call(depth0, {hash:{},data:data}); }
   else { helper = (depth0 && depth0.id); stack1 = typeof helper === functionType ? helper.call(depth0, {hash:{},data:data}) : helper; }
   buffer += escapeExpression(stack1)
-    + "/confirm\"><span class=\"glyphicon glyphicon-remove\"> FINISH</span></a>            \n        </div>\n    </div>\n</div>";
+    + "/alert\"><span class=\"glyphicon glyphicon-bell\"> ALERT</span></a>\n        </div>\n    </div>\n</div>";
   return buffer;
   });
 
