@@ -14057,7 +14057,7 @@ module.exports = Backbone.View.extend({
         } else {
             duration = this.model.get("duration");
         }
-        this.timerView = new CompleteTimerView({el: $("#progress", this.el), model: this.model, duration: duration});
+        this.timerView = new CompleteTimerView({el: $("#progress", this.el), duration: duration});
         return this;
     }
 
