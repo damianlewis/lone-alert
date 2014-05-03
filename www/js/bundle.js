@@ -33,14 +33,6 @@ var app = {
     // The scope of 'this' is the event. In order to call the 'receivedEvent'
     // function, we must explicity call 'app.receivedEvent(...);'
     onDeviceReady: function() {
-        // app.receivedEvent('deviceready');
-        console.log("checking device features");
-        if (navigator.geolocation) {
-            console.log("geolocation");
-        }
-        if (navigator.accelerometer) {
-            console.log("accelerometer");
-        }
         Backbone.history.start();
     },
 };
@@ -68,14 +60,6 @@ var getAll = function() {
 };
 
 var Appointment = Backbone.Model.extend({
-
-    // sync: function(method, model, options) {
-    //     if (method === "read") {
-    //         findById(parseInt(this.id)).done(function (data) {
-    //             options.success(data);
-    //         });
-    //     }
-    // }
 
 });
 
