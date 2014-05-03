@@ -59,4 +59,25 @@ module.exports = function PageSlider(container) {
         currentPage = page;
     }
 
+    this.addPage = function(page) {
+        
+        var l = stateHistory.length,
+            state = window.location.hash;
+
+        if (l === 0) {
+            stateHistory.push(state);
+            return;
+        }
+        if (state === stateHistory[l-2] || state === stateHistory[0]) {
+            stateHistory.pop();
+        } else {
+            stateHistory.push(state);
+        }
+
+        container.append(page);
+        currentPage.attr("class", "page left");
+        page.attr("class", "page center");
+        currentPage = page;
+    }
+
 }

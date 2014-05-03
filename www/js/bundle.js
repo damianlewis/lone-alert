@@ -1020,6 +1020,27 @@ module.exports = function PageSlider(container) {
         currentPage = page;
     }
 
+    this.addPage = function(page) {
+        
+        var l = stateHistory.length,
+            state = window.location.hash;
+
+        if (l === 0) {
+            stateHistory.push(state);
+            return;
+        }
+        if (state === stateHistory[l-2] || state === stateHistory[0]) {
+            stateHistory.pop();
+        } else {
+            stateHistory.push(state);
+        }
+
+        container.append(page);
+        currentPage.attr("class", "page left");
+        page.attr("class", "page center");
+        currentPage = page;
+    }
+
 }
 },{"jquery":16}],6:[function(require,module,exports){
 //     Backbone.js 1.1.2
@@ -13588,11 +13609,14 @@ var models = require('./models/memory/appointment');
 Backbone.$ = $;
 
 var slider = new PageSlider($('body'));
-// var page = new $('body');
 var appointmentList = new models.AppointmentCollection();
 
 module.exports = Backbone.Router.extend({
     
+    // initialize: function () {
+    //     this.page = null;
+    // },
+
     routes: {
         "": "home",
         "schedule": "schedule",
@@ -13628,14 +13652,21 @@ module.exports = Backbone.Router.extend({
 
     progress: function(id) {
         console.log("progress");
+        // this.page = "progress";
         var appointment = appointmentList.get(id);
         slider.slidePage(new ProgressView({model: appointment}).$el);
     },
 
     complete: function(id) {
         console.log("complete");
+        // console.log("page: " + this.page);
         var appointment = appointmentList.get(id);
-        slider.slidePage(new CompleteView({model: appointment}).$el);
+        if (appointment.get("status") != "inprogress") {
+            slider.slidePage(new CompleteView({model: appointment}).$el);
+        } else {
+            this.page = null;
+            slider.addPage(new CompleteView({model: appointment}).$el);
+        }
     },
 
     confirm: function(id) {

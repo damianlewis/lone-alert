@@ -16,7 +16,6 @@ var models = require('./models/memory/appointment');
 Backbone.$ = $;
 
 var slider = new PageSlider($('body'));
-// var page = new $('body');
 var appointmentList = new models.AppointmentCollection();
 
 module.exports = Backbone.Router.extend({
@@ -63,7 +62,12 @@ module.exports = Backbone.Router.extend({
     complete: function(id) {
         console.log("complete");
         var appointment = appointmentList.get(id);
-        slider.slidePage(new CompleteView({model: appointment}).$el);
+        if (appointment.get("status") != "inprogress") {
+            slider.slidePage(new CompleteView({model: appointment}).$el);
+        } else {
+            this.page = null;
+            slider.addPage(new CompleteView({model: appointment}).$el);
+        }
     },
 
     confirm: function(id) {
