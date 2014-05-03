@@ -22,7 +22,6 @@ module.exports = Backbone.View.extend({
 
     onConfirm: function() {
         this.model.set({status: "complete"});
-        this.model.save();
     }
 
 });
