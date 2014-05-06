@@ -13616,10 +13616,6 @@ var appointmentList = new models.AppointmentCollection();
 
 module.exports = Backbone.Router.extend({
     
-    // initialize: function () {
-    //     this.page = null;
-    // },
-
     routes: {
         "": "home",
         "schedule": "schedule",
@@ -13655,14 +13651,12 @@ module.exports = Backbone.Router.extend({
 
     progress: function(id) {
         console.log("progress");
-        // this.page = "progress";
         var appointment = appointmentList.get(id);
         slider.slidePage(new ProgressView({model: appointment}).$el);
     },
 
     complete: function(id) {
         console.log("complete");
-        // console.log("page: " + this.page);
         var appointment = appointmentList.get(id);
         if (appointment.get("status") != "inprogress") {
             slider.slidePage(new CompleteView({model: appointment}).$el);
