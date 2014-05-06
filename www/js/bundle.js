@@ -14173,7 +14173,7 @@ module.exports = Backbone.View.extend({
     },
 
     wait: function() {
-        this.waitId = setTimeout(this.onWaitComplete, 5000); // Wait 10 seconds before goint to alert mode
+        this.waitId = setTimeout(this.onWaitComplete, 10000); // Wait 10 seconds before goint to alert mode
     },
 
     onWaitComplete: function() {
